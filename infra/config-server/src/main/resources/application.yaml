@@ -8,9 +8,9 @@ spring:
       server:
         native:
           searchLocations:
-            - classpath:config/core/{application}
+            - classpath:config/core/{application}-{profile}
             - classpath:config/infra/{application}
-            - classpath:config/stat/{application}
+            - classpath:config/stat/{application}-{profile}
 eureka:
   client:
     serviceUrl:
