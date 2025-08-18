@@ -10,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import ru.practicum.config.DateConfig;
-import ru.practicum.config.StatsClientConfig;
 import ru.practicum.controller.ClientController;
 import ru.practicum.dto.ReadEndpointHitDto;
 import ru.practicum.errors.EventNotPublishedException;
@@ -37,12 +36,6 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     private final EventRepository eventRepository;
 
     private final ClientController clientController;
-
-    @Autowired
-    public PublicEventsServiceImpl(EventRepository eventRepository, StatsClientConfig statsClientConfig) {
-        this.eventRepository = eventRepository;
-        this.clientController = new ClientController(statsClientConfig.getHost(), statsClientConfig.getPort());
-    }
 
     @Override
     public Event getEvent(Long id) {
