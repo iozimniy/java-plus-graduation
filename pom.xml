@@ -13,7 +13,6 @@
 	<name>Explore With Me</name>
     <modules>
         <module>stat</module>
-		<module>ewm-service</module>
         <module>infra</module>
 		<module>core</module>
 	</modules>
