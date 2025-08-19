@@ -22,7 +22,7 @@ public class User {
     @Column(name = "name")
     private String name; // имя или логин пользователя;
 
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     private String email; // адрес электронной почты
 
 }

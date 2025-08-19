@@ -1,15 +1,15 @@
 package ru.practicum.config;
 
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Configuration;
 
-//@Configuration
+//@ConfigurationProperties("stats.client")
 @Data
+//@Component
 public class StatsClientConfig {
-    @Value("${stats.client.host}")
+
+    //@Value("${stats.client.host}")
     private String host;
 
-    @Value("${stats.client.port}")
+    //@Value("${stats.client.port}")
     private String port;
 }

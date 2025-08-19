@@ -23,6 +23,7 @@ public class Event {
 
     private String title;
 
+    @Column(name = "annotation", length = 2000)
     private String annotation;
 
     @ManyToOne
@@ -32,6 +33,7 @@ public class Event {
     @Transient
     private Integer confirmedRequests;
 
+    @Column(name = "description", length = 7000)
     private String description;
 
     @Column(name = "event_date")
