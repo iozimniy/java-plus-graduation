@@ -24,17 +24,3 @@ eureka:
     hostname: localhost
     instance-id: "${spring.application.name}:${random.value}"
     leaseRenewalIntervalInSeconds: 10
-
-#  stats.client:
-#  host: localhost
-#  port: 9090
-
-  logging:
-    level:
-      org:
-        hibernate:
-          SQL: TRACE
-          type:
-            descriptor:
-              sql:
-                BasicBinder: TRACE
