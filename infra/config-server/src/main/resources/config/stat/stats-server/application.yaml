@@ -10,8 +10,6 @@ spring:
     init:
       mode: always
 
-  profiles:
-    active: dev
   datasource:
     url: jdbc:postgresql://localhost:6542/ewm-stats
     username: stat
