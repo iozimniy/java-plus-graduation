@@ -13,6 +13,8 @@ services:
       interval: 5s
       retries: 10
       timeout: 5s
+    volumes:
+      - ./src/main/resources:/docker-entrypoint-initdb.d
 
   ewm-db:
     container_name: ewm-db
@@ -28,3 +30,9 @@ services:
       interval: 5s
       retries: 10
       timeout: 5s
+    volumes:
+      - ./src/main/resources:/docker-entrypoint-initdb.d
+
+volumes:
+  ewm-stats-data:
+  ewm-database-data:
