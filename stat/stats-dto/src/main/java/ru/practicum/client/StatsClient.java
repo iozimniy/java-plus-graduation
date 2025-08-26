@@ -21,7 +21,7 @@ import java.util.Optional;
 @FeignClient(name = "stats-server")
 public interface StatsClient {
     @PostMapping("/hit")
-    ResponseEntity<Void> saveHit(@Valid @RequestBody CreateEndpointHitDto dto);
+    void saveHit(@Valid @RequestBody CreateEndpointHitDto dto);
 
     @GetMapping("/stats")
     ResponseEntity<Collection<ReadEndpointHitDto>> getHits(@RequestParam
@@ -36,5 +36,5 @@ public interface StatsClient {
                                                            boolean unique);
 
     @PostMapping("/hit/group")
-    ResponseEntity<Void> saveHitGroup(@RequestBody ManyEndPointDto many);
+    void saveHitGroup(@RequestBody ManyEndPointDto many);
 }

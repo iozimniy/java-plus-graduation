@@ -32,10 +32,10 @@ public class StatsController implements StatsClient {
         this.endpointHitService = endpointHitService;
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/hit")
-    public ResponseEntity<Void> saveHit(@Valid @RequestBody CreateEndpointHitDto dto) {
+    public void saveHit(@Valid @RequestBody CreateEndpointHitDto dto) {
         endpointHitService.saveHit(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/stats")
@@ -59,11 +59,11 @@ public class StatsController implements StatsClient {
         return ResponseEntity.status(HttpStatus.OK).body(endpointHitService.getHits(takeHitsDto));
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/hit/group")
-    public ResponseEntity<Void> saveHitGroup(@RequestBody ManyEndPointDto many) {
+    public void saveHitGroup(@RequestBody ManyEndPointDto many) {
         log.info("\nStatsController.saveHitsGroup many {}", many);
 
         endpointHitService.saveHitsGroup(many);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
