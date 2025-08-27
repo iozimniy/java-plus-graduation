@@ -2,7 +2,6 @@ package ru.practicum.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +20,7 @@ import java.util.*;
 @Slf4j
 @EnableFeignClients(clients = {StatsClient.class})
 @Component
-public class ClientController {
+public class ClientAdapter {
 
     private final StatsClient statsClient;
 

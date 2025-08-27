@@ -5,13 +5,11 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import ru.practicum.config.DateConfig;
-import ru.practicum.config.StatsClientConfig;
-import ru.practicum.controller.ClientController;
+import ru.practicum.controller.ClientAdapter;
 import ru.practicum.dto.ReadEndpointHitDto;
 import ru.practicum.errors.EventNotPublishedException;
 import ru.practicum.events.dto.EventFullDto;
@@ -36,7 +34,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     private final EventRepository eventRepository;
 
-    private final ClientController clientController;
+    private final ClientAdapter clientAdapter;
 
     @Override
     public Event getEvent(Long id) {
@@ -46,7 +44,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     @Override
     public int getEventsViews(long id, LocalDateTime publishedOn) {
         List<String> uris = List.of("/events/" + id);
-        List<ReadEndpointHitDto> res = clientController.getHits(publishedOn.format(DateConfig.FORMATTER),
+        List<ReadEndpointHitDto> res = clientAdapter.getHits(publishedOn.format(DateConfig.FORMATTER),
                 LocalDateTime.now().format(DateConfig.FORMATTER), uris, true);
         log.info("\nPublicEventsServiceImpl.getEventsViews: res {}", res);
         return (CollectionUtils.isEmpty(res)) ? 0 : res.getFirst().getHits();
@@ -83,7 +81,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
                 .map(event -> "/event/" + event.getId())
                 .toList();
 
-        List<ReadEndpointHitDto> acceptedList = clientController.getHits(start.format(DateConfig.FORMATTER),
+        List<ReadEndpointHitDto> acceptedList = clientAdapter.getHits(start.format(DateConfig.FORMATTER),
                 LocalDateTime.now().format(DateConfig.FORMATTER), uris, true);
         // Заносим значения views в список events
         viewsToEvents(acceptedList, events);
@@ -101,7 +99,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         // Получаем views
         event.setViews(getEventsViews(event.getId(), event.getPublishedOn()));
         //Имеем новый просмотр - сохраняем его
-        clientController.saveView(lookEventDto.getIp(), lookEventDto.getUri());
+        clientAdapter.saveView(lookEventDto.getIp(), lookEventDto.getUri());
 
         return EventMapper.toEventFullDto(event);
     }
@@ -147,7 +145,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         List<Event> events = eventRepository.searchEvents(builder, ParticipationRequestStatus.CONFIRMED,
                 searchEventsParams.getOnlyAvailable(), searchEventsParams.getFrom(), searchEventsParams.getSize());
         if (events.isEmpty()) {
-            clientController.saveView(lookEventDto.getIp(), "/events");
+            clientAdapter.saveView(lookEventDto.getIp(), "/events");
             return List.of();
         }
 
@@ -162,7 +160,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
             uris.add("/events/" + e.getId());
         }
 
-        List<ReadEndpointHitDto> acceptedList = clientController.getHits(searchEventsParams.getRangeStart(),
+        List<ReadEndpointHitDto> acceptedList = clientAdapter.getHits(searchEventsParams.getRangeStart(),
                 searchEventsParams.getRangeEnd(), uris, true);
         viewsToEvents(acceptedList, events);
 
@@ -186,7 +184,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         }
 
         uris.add("/events");
-        clientController.saveHitsGroup(uris, lookEventDto.getIp());
+        clientAdapter.saveHitsGroup(uris, lookEventDto.getIp());
         log.info("\n Final list {}", sortedEvents);
         return EventMapper.toListEventShortDto(sortedEvents);
     }
