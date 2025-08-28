@@ -9,7 +9,6 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <groupId>ru.practicum</groupId>
     <artifactId>stats-client</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
@@ -68,6 +67,5 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 </project>

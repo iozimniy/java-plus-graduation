@@ -1,14 +1,4 @@
 services:
-  stats-server:
-    build: stat/stats-server
-    container_name: stats-server
-    ports:
-      - "9090:9090"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/ewm-stats
-      SPRING_DATASOURCE_USERNAME: stat
-      SPRING_DATASOURCE_PASSWORD: stat
-
   stats-db:
     image: postgres:16.1
     container_name: postgres-ewm-stats-db
@@ -23,17 +13,8 @@ services:
       interval: 5s
       retries: 10
       timeout: 5s
-
-  ewm-service:
-    build: ewm-service
-    container_name: ewm-service
-    ports:
-      - "8080:8080"
-    environment:
-      CLIENT_URL: http://stats-server:9090
-      SPRING_DATASOURCE_URL: jdbc:postgresql://ewm-db:5432/ewm-database
-      SPRING_DATASOURCE_USERNAME: user
-      SPRING_DATASOURCE_PASSWORD: password
+    volumes:
+      - ./src/main/resources:/docker-entrypoint-initdb.d
 
   ewm-db:
     container_name: ewm-db
@@ -49,3 +30,9 @@ services:
       interval: 5s
       retries: 10
       timeout: 5s
+    volumes:
+      - ./src/main/resources:/docker-entrypoint-initdb.d
+
+volumes:
+  ewm-stats-data:
+  ewm-database-data:

@@ -7,6 +7,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.client.StatsClient;
 import ru.practicum.config.DateConfig;
 import ru.practicum.dto.CreateEndpointHitDto;
 import ru.practicum.dto.ManyEndPointDto;
@@ -22,7 +23,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("")
 @Slf4j
-public class StatsController {
+public class StatsController implements StatsClient {
 
     private final EndpointHitService endpointHitService;
 
@@ -31,10 +32,10 @@ public class StatsController {
         this.endpointHitService = endpointHitService;
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/hit")
-    public ResponseEntity<Void> saveHit(@Valid @RequestBody CreateEndpointHitDto dto) {
+    public void saveHit(@Valid @RequestBody CreateEndpointHitDto dto) {
         endpointHitService.saveHit(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/stats")
@@ -58,11 +59,11 @@ public class StatsController {
         return ResponseEntity.status(HttpStatus.OK).body(endpointHitService.getHits(takeHitsDto));
     }
 
+    @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/hit/group")
-    public ResponseEntity<Void> saveHitGroup(@RequestBody ManyEndPointDto many) {
+    public void saveHitGroup(@RequestBody ManyEndPointDto many) {
         log.info("\nStatsController.saveHitsGroup many {}", many);
 
         endpointHitService.saveHitsGroup(many);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }
