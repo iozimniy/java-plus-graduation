@@ -9,7 +9,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.commons.config.DateConfig;
-import ru.practicum.event.model.Location;
 import ru.practicum.event.validation.TimePresentOrFuture;
 
 @Data
@@ -27,7 +26,7 @@ public class UpdateEventUserRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateConfig.FORMAT)
     @TimePresentOrFuture
     private String eventDate;
-    private Location location;
+    private LocationDto location;
     private boolean paid;
     @Positive
     private Integer participantLimit;

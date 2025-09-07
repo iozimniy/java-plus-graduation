@@ -1,28 +1,29 @@
 package ru.practicum.events.repository;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.Tuple;
 import com.querydsl.jpa.impl.JPAQuery;
+import feign.FeignException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import ru.practicum.events.model.Event;
 import ru.practicum.events.model.QEvent;
+import ru.practicum.request.client.ParticipationRequestClient;
 import ru.practicum.request.constants.ParticipationRequestStatus;
-import ru.practicum.users.model.QParticipationRequest;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     private final EntityManager em;
+    private ParticipationRequestClient requestClient;
 
     @Override
     public Page<Event> findAllWithBuilder(BooleanBuilder builder, Pageable pageable) {
@@ -51,25 +52,28 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     @Override
     public Event findEventWithStatus(Long eventId, ParticipationRequestStatus status) {
         QEvent event = QEvent.event;
-        QParticipationRequest request = QParticipationRequest.participationRequest;
 
-        JPAQuery<Tuple> query = new JPAQuery<>(em)
-                .select(event, request.id.count())
+        Event foundEvent = new JPAQuery<>(em)
+                .select(event)
                 .from(event)
-                .leftJoin(request).on(request.event.eq(event).and(request.status.eq(status)))
                 .where(event.id.eq(eventId))
-                .groupBy(event);
-        Tuple result = query.fetchOne();
+                .fetchOne();
 
-        if (result == null) {
+        if (foundEvent == null) {
             throw new EntityNotFoundException("Event with" + eventId + " not found");
         }
 
-        Event foundEvent = result.get(event);
-        Integer confirmedCount = result.get(request.id.count()).intValue();
+        int confirmedCount = 0;
 
-        foundEvent.setConfirmedRequests((confirmedCount == null) ? 0 : confirmedCount);
+        if (status.equals(ParticipationRequestStatus.CONFIRMED)) {
+            try {
+                confirmedCount = requestClient.getConfirmedRequestsCount(eventId);
+            } catch (FeignException e) {
+                log.error("ParticipationRequestClient error: getConfirmedRequestsCount(eventId) with {}", e);
+            }
+        }
 
+        foundEvent.setConfirmedRequests(confirmedCount);
         return foundEvent;
     }
 
@@ -77,29 +81,24 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     public List<Event> searchEvents(BooleanBuilder eventCondition, ParticipationRequestStatus status,
                                     boolean onlyAvailable, int from, int size) {
         QEvent event = QEvent.event;
-        QParticipationRequest participation = QParticipationRequest.participationRequest;
-
-        // Строим запрос
-        JPAQuery<Tuple> query = new JPAQuery<>(em)
-                .select(event, participation.count())
+        List<Event> events = new JPAQuery<>(em)
+                .select(event)
                 .from(event)
-                .leftJoin(participation).on(participation.event.id.eq(event.id)
-                        .and(participation.status.eq(status)))
                 .where(eventCondition)
-                .groupBy(event.id);
+                .fetch();
 
-        // Выполняем запрос
-        List<Tuple> results = query.fetch();
+        if (events.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
 
-        // обработка результата
-        List<Event> events = new ArrayList<>();
+        events = addConfirmedCounts(events);
+
+
         if (onlyAvailable) {
-            events = tuplesToEvents(event, results).stream()
+            events.stream()
                     .filter(ev -> ev.getParticipantLimit() == 0 ||
                             ev.getParticipantLimit() > ev.getConfirmedRequests())
                     .toList();
-        } else {
-            events = tuplesToEvents(event, results);
         }
 
         int toIndex = Math.min(from + size, events.size());
@@ -112,62 +111,58 @@ public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     @Override
     public List<Event> findEventsWithConfirmedCount(List<Long> eventIds) {
         QEvent event = QEvent.event;
-        QParticipationRequest participation = QParticipationRequest.participationRequest;
 
-        JPAQuery<Tuple> query = new JPAQuery<>(em)
-                .select(event, participation.count())
+        List<Event> events = new JPAQuery<>(em)
+                .select(event)
                 .from(event)
-                .leftJoin(participation)
-                .on(participation.event.id.eq(event.id)
-                        .and(participation.status.eq(ParticipationRequestStatus.CONFIRMED)))
                 .where(event.id.in(eventIds))
-                .groupBy(event.id);
+                .fetch();
 
-        List<Tuple> currentList = query.fetch();
-        return tuplesToEvents(event, currentList);
+        if (events.isEmpty()) {
+            return Collections.EMPTY_LIST;
+        }
+
+        events = addConfirmedCounts(events);
+
+
+
+        return events;
     }
 
     @Override
     public Event getSingleEvent(Long id) {
         QEvent event = QEvent.event;
-        QParticipationRequest participation = QParticipationRequest.participationRequest;
 
-        Tuple result = new JPAQuery<>(em)
-                .select(event, participation.id.count().coalesce(0L)) // Берем event и количество подтвержденных заявок
+        Event eventResult = new JPAQuery<>(em)
+                .select(event)
                 .from(event)
-                .leftJoin(participation).on(event.id.eq(participation.event.id)
-                        .and(participation.status.eq(ParticipationRequestStatus.CONFIRMED)))
                 .where(event.id.eq(id))
-                .groupBy(event.id)
                 .fetchOne();
 
-        if (result == null || result.get(event) == null) {
-            return null;
-        }
-
-        Event eventResult = result.get(event);
         if (eventResult == null) {
             return null;
         }
-        Integer confirmedRequestsCount = result.get(participation.id.count().coalesce(0L).intValue());
 
-        eventResult.setConfirmedRequests((confirmedRequestsCount == null) ? 0 : confirmedRequestsCount);
+        int confirmedCount = 0;
+
+        try {
+            confirmedCount = requestClient.getConfirmedRequestsCount(id);
+        } catch (FeignException e) {
+            log.error("ParticipationRequestClient error: getConfirmedRequestsCount(eventId) with {}", e);
+        }
 
         return eventResult;
     }
 
-    private List<Event> tuplesToEvents(QEvent event, List<Tuple> tuples) {
-        List<Event> events = new ArrayList<>();
-        for (Tuple tuple : tuples) {
-            Event e = tuple.get(event);  // Извлекаем событие
-            if (e != null) {
-                Integer confirmedCount = Optional.ofNullable(tuple.get(1, Long.class))
-                        .map(Long::intValue)
-                        .orElse(0);  // Извлекаем количество участников
-                e.setConfirmedRequests(confirmedCount);  // пишем в транзиентное поле
-                events.add(e);
-            }
+    private List<Event> addConfirmedCounts(List<Event> events) {
+
+        List<Long> ids = events.stream().map(Event::getId).toList();
+        Map<Long, Integer> eventsConfirmedCounts = requestClient.getConfirmedRequestsCountForList(ids);
+
+        for (Event foundEvent : events) {
+            foundEvent.setConfirmedRequests(eventsConfirmedCounts.getOrDefault(foundEvent.getId(), 0));
         }
+
         return events;
     }
 }

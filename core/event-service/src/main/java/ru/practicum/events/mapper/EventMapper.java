@@ -7,9 +7,11 @@ import ru.practicum.category.model.Category;
 import ru.practicum.config.DateConfig;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.event.dto.LocationDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.events.model.Event;
 import ru.practicum.event.constants.StateEvent;
+import ru.practicum.events.model.Location;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.dto.UserShortDto;
 
@@ -26,7 +28,7 @@ public class EventMapper {
                 .category(event.getCategory().getId())
                 .description(event.getDescription())
                 .eventDate(event.getEventDate().format(DateConfig.FORMATTER))
-                .location(event.getLocation())
+                .location(toLocationDto(event.getLocation()))
                 .paid(event.isPaid())
                 .participantLimit(event.getParticipantLimit())
                 .requestModeration(event.isRequestModeration())
@@ -46,7 +48,7 @@ public class EventMapper {
                 .category(category)
                 .description(dto.getDescription())
                 .eventDate(eventTime)
-                .location(dto.getLocation())
+                .location(toLocation(dto.getLocation()))
                 .paid(dto.isPaid())
                 .participantLimit(Objects.nonNull(dto.getParticipantLimit()) ? dto.getParticipantLimit() : 0)
                 .requestModeration(Objects.nonNull(dto.getRequestModeration()) ? dto.getRequestModeration() : true)
@@ -101,6 +103,22 @@ public class EventMapper {
         return events.stream()
                 .map(EventMapper::toEventShortDto)
                 .toList();
+    }
+
+    public static Location toLocation(LocationDto locationDto) {
+        return Location.builder()
+                .id(locationDto.getId())
+                .lat(locationDto.getLat())
+                .lon(locationDto.getLon())
+                .build();
+    }
+
+    public static LocationDto toLocationDto(Location location) {
+        return LocationDto.builder()
+                .id(location.getId())
+                .lat(location.getLat())
+                .lon(location.getLon())
+                .build();
     }
 
 }

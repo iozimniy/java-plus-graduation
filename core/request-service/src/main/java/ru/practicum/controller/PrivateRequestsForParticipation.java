@@ -17,7 +17,7 @@ import java.util.List;
 @RequestMapping("/users/{userId}/requests")
 @Slf4j
 @RequiredArgsConstructor
-public class PrivateRequestsForParticipation implements ParticipationRequestClient {
+public class PrivateRequestsForParticipation {
 
     private final ParticipationRequestService participationRequestService;
 
@@ -44,23 +44,5 @@ public class PrivateRequestsForParticipation implements ParticipationRequestClie
         log.info("Request to cancel participation request for user {} and request {}", userId, requestId);
         ParticipationRequestDto cancelledRequest = participationRequestService.cancelRequest(userId, requestId);
         return ResponseEntity.ok(cancelledRequest);
-    }
-
-    //тут методы для межсервисного взаимодействия
-
-    @GetMapping("/{eventId}")
-    public List<ParticipationRequestDto> getRequestsByEventId(@PathVariable Long userId,
-                                                              @PathVariable Long eventId) {
-        return participationRequestService.getUserRequestsByEventId(userId, eventId);
-    }
-
-    @GetMapping
-    public List<ParticipationRequestDto> getRequestsByIds(List<Long> ids) {
-        return participationRequestService.getRequestsByIds(ids);
-    }
-
-    @PatchMapping
-    public void updateStatusByIds(ParticipationRequestStatus status, List<Long> ids) {
-        participationRequestService.updateStatusByIds(status, ids);
     }
 }

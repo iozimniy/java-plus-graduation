@@ -88,7 +88,10 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
         Optional.ofNullable(updateDto.getAnnotation()).ifPresent(event::setAnnotation);
         Optional.ofNullable(updateDto.getDescription()).ifPresent(event::setDescription);
         Optional.ofNullable(updateDto.getEventDate()).map(this::parseEventDate).ifPresent(event::setEventDate);
-        Optional.ofNullable(updateDto.getLocation()).ifPresent(event::setLocation);
+
+        if (updateDto.getLocation() != null) {
+            event.setLocation(EventMapper.toLocation(updateDto.getLocation()));
+        }
 
         if (updateDto.getCategory() != 0) {
             event.setCategory(categoryRepository.findById((long) updateDto.getCategory())

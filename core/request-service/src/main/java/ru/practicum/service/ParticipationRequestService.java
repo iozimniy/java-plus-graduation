@@ -17,6 +17,8 @@ import ru.practicum.validation.ParticipationRequestValidator;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -96,5 +98,12 @@ public class ParticipationRequestService {
 
     public void updateStatusByIds(ParticipationRequestStatus status, List<Long> ids) {
         requestRepository.updateStatusByIds(status, ids);
+    }
+
+    public Map<Long, Integer> getConfirmedRequestsForList(List<Long> ids) {
+        return ids.stream().collect(Collectors.toMap(
+                s -> s,
+                s -> getConfirmedRequests(s)
+        ));
     }
 }

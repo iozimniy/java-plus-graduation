@@ -10,7 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.commons.config.DateConfig;
 import ru.practicum.event.constants.EventStateAction;
-import ru.practicum.event.model.Location;
 
 import java.time.LocalDateTime;
 
@@ -29,7 +28,7 @@ public class UpdateEventAdminRequest {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DateConfig.FORMAT)
     @Future
     private LocalDateTime eventDate;
-    private Location location;
+    private LocationDto location;
     private Boolean paid;
     private Integer participantLimit;
     private Boolean requestModeration;

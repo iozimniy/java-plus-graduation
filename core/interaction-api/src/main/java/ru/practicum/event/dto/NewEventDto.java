@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.commons.config.DateConfig;
-import ru.practicum.event.model.Location;
 import ru.practicum.event.validation.TimeNotEarly;
 
 @Data
@@ -35,7 +34,7 @@ public class NewEventDto {
     private String eventDate;
 
     @NotNull
-    private Location location;
+    private LocationDto location;
 
     private boolean paid;
 
