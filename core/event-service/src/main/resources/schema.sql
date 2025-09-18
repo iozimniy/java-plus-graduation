@@ -1,5 +1,4 @@
 DROP TABLE IF EXISTS comments;
-DROP TABLE IF EXISTS participation_request;
 DROP TABLE IF EXISTS compilation_events;
 DROP TABLE IF EXISTS compilations;
 DROP TABLE IF EXISTS events;
@@ -34,6 +33,7 @@ CREATE TABLE IF NOT EXISTS events (
   state VARCHAR(50) NOT NULL,
   views BIGINT,
   initiator_id BIGINT,
+  initiator_name VARCHAR(250),
   FOREIGN KEY (category_id) REFERENCES category (id),
   FOREIGN KEY (location_id) REFERENCES locations (id)
 );

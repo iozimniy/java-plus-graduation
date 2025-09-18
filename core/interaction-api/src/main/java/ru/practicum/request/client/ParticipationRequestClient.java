@@ -1,32 +1,28 @@
 package ru.practicum.request.client;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import ru.practicum.request.constants.ParticipationRequestStatus;
+import org.springframework.web.bind.annotation.*;
 import ru.practicum.request.dto.ParticipationRequestDto;
+import ru.practicum.request.dto.ParticipationRequestUpdateStatusDto;
 
 import java.util.List;
 import java.util.Map;
 
-@FeignClient(name = "request-service", path = "/users/{userId}/requests")
+@FeignClient(name = "request-service", path = "/internal/requests")
 public interface ParticipationRequestClient {
 
     @GetMapping("/{eventId}")
-    List<ParticipationRequestDto> getRequestsByEventId(@PathVariable Long userId,
-                                                              @PathVariable Long eventId);
+    List<ParticipationRequestDto> getRequestsByEventId(@PathVariable("eventId") Long eventId);
 
-    @GetMapping
+    @PostMapping
     List<ParticipationRequestDto> getRequestsByIds(List<Long> ids);
 
-    @PatchMapping
-    void updateStatusByIds(ParticipationRequestStatus status, List<Long> ids);
+    @PutMapping
+    void updateStatusByIds(@RequestBody ParticipationRequestUpdateStatusDto requestUpdateStatusDto);
 
     @GetMapping("/count/confirmed/{eventId}")
-    int getConfirmedRequestsCount(@PathVariable Long eventId);
+    int getConfirmedRequestsCount(@PathVariable("eventId") Long eventId);
 
-    @GetMapping("/count/confirmed")
+    @PostMapping("/count/confirmed/list")
     Map<Long, Integer> getConfirmedRequestsCountForList(@RequestBody List<Long> ids);
 }

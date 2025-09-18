@@ -7,8 +7,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.repository.CategoryRepository;
+import ru.practicum.commons.errors.ForbiddenActionException;
 import ru.practicum.config.DateConfig;
-import ru.practicum.errors.ForbiddenActionException;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
@@ -21,6 +21,7 @@ import ru.practicum.request.client.ParticipationRequestClient;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 import ru.practicum.request.constants.RequestUpdateStatus;
 import ru.practicum.request.dto.ParticipationRequestDto;
+import ru.practicum.request.dto.ParticipationRequestUpdateStatusDto;
 import ru.practicum.user.client.UserClient;
 import ru.practicum.user.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.user.dto.EventRequestStatusUpdateResult;
@@ -110,7 +111,7 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
     public List<ParticipationRequestDto> getUserEventRequests(Long userId, Long eventId) {
         eventRepository.findByIdAndInitiatorId(eventId, userId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found with id: " + eventId + " for user " + userId));
-        return requestClient.getRequestsByEventId(userId, eventId);
+        return requestClient.getRequestsByEventId(eventId);
     }
 
     @Override
@@ -131,7 +132,14 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
         int diff = partLimit - confPart;
 
         if (diff >= request.getRequestIds().size()) {
-            requestClient.updateStatusByIds(ParticipationRequestStatus.valueOf(request.getStatus()), request.getRequestIds());
+
+            ParticipationRequestUpdateStatusDto requestUpdateStatusDto =
+                    ParticipationRequestUpdateStatusDto.builder()
+                            .status(ParticipationRequestStatus.valueOf(request.getStatus()))
+                            .requestIds(request.getRequestIds())
+                            .build();
+
+            requestClient.updateStatusByIds(requestUpdateStatusDto);
             if (RequestUpdateStatus.valueOf(request.getStatus()).equals(RequestUpdateStatus.CONFIRMED)) {
 
                 for (ParticipationRequestDto req : participation) {
@@ -160,8 +168,20 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
                     rejected.add(request.getRequestIds().get(i));
                 } else confirmed.add(request.getRequestIds().get(i));
             }
-            requestClient.updateStatusByIds(ParticipationRequestStatus.CONFIRMED, confirmed);
-            requestClient.updateStatusByIds(ParticipationRequestStatus.REJECTED, rejected);
+
+            ParticipationRequestUpdateStatusDto updateStatusDtoForConfirmed =
+                    ParticipationRequestUpdateStatusDto.builder()
+                            .status(ParticipationRequestStatus.CONFIRMED)
+                            .requestIds(confirmed)
+                            .build();
+            ParticipationRequestUpdateStatusDto updateStatusDtoForRejected =
+                    ParticipationRequestUpdateStatusDto.builder()
+                            .status(ParticipationRequestStatus.REJECTED)
+                            .requestIds(rejected)
+                            .build();
+
+            requestClient.updateStatusByIds(updateStatusDtoForConfirmed);
+            requestClient.updateStatusByIds(updateStatusDtoForRejected);
 
             EventRequestStatusUpdateResult res = new EventRequestStatusUpdateResult();
 

@@ -23,7 +23,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class EventRepositoryCustomImpl implements EventRepositoryCustom {
     private final EntityManager em;
-    private ParticipationRequestClient requestClient;
+    private final ParticipationRequestClient requestClient;
 
     @Override
     public Page<Event> findAllWithBuilder(BooleanBuilder builder, Pageable pageable) {

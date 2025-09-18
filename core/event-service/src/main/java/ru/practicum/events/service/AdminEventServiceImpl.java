@@ -3,6 +3,7 @@ package ru.practicum.events.service;
 import com.querydsl.core.BooleanBuilder;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -143,6 +145,8 @@ public class AdminEventServiceImpl implements AdminEventService {
 
     @Override
     public EventFullDto getEventById(Long id) {
+        log.info("Request for get event by id {}", id);
+
         Event event = eventRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Event with id=" + id + " was not found"));
 

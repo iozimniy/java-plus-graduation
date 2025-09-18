@@ -12,9 +12,13 @@ spring:
           predicates:
             - Path=/admin/users/**
         - id: request_service_route
-          uri: lb:/request-service
+          uri: lb://request-service
           predicates:
             - Path=/users/*/requests/**
+        - id: event_service_route
+          uri: lb://event-service
+          predicates:
+            - Path=/**
 
 server:
   port: 8080

@@ -1,6 +1,8 @@
 package ru.practicum.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.request.constants.ParticipationRequestStatus;
@@ -8,9 +10,11 @@ import ru.practicum.request.constants.ParticipationRequestStatus;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "participation_request", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "event_id"}))
+@Table(name = "participation_request")
 @Data
 @NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class ParticipationRequest {
 
     @Id

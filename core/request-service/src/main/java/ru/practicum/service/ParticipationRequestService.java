@@ -2,6 +2,7 @@ package ru.practicum.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.event.client.EventClient;
@@ -11,6 +12,7 @@ import ru.practicum.model.ParticipationRequest;
 import ru.practicum.repository.ParticipationRequestRepository;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 import ru.practicum.request.dto.ParticipationRequestDto;
+import ru.practicum.request.dto.ParticipationRequestUpdateStatusDto;
 import ru.practicum.user.client.UserClient;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.validation.ParticipationRequestValidator;
@@ -20,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -47,8 +50,25 @@ public class ParticipationRequestService {
 
     @Transactional
     public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-        UserDto userDto = userClient.getUser(userId);
-        EventFullDto event = eventClient.getEventById(eventId);
+        log.info("Request for add ParticipationRequest with user id {} and event id {}", userId, eventId);
+        UserDto userDto = null;
+
+        try {
+            userDto = userClient.getUser(userId);
+        } catch (Exception e) {
+            log.error("Request for get user with id {} to userClient is failed with message {}", userId, e);
+        }
+
+
+        EventFullDto event = null;
+
+        try {
+           event = eventClient.getEventById(eventId);
+           log.debug("Event from EventClient: {}", event);
+        } catch (Exception e) {
+            log.error("Request for get event with id {} to eventClient is failed with message {}", eventId, e);
+        }
+
         long confirmedRequestsCount = getConfirmedRequests(eventId);
 
         RuntimeException validationError =
@@ -57,15 +77,19 @@ public class ParticipationRequestService {
         if (validationError != null)
             throw validationError;
 
-        ParticipationRequest request = new ParticipationRequest();
-        request.setUserId(userDto.getId());
-        request.setEventId(event.getId());
+        ParticipationRequest request = ParticipationRequest.builder()
+                .userId(userDto.getId())
+                .eventId(eventId)
+                .build();
+
         if (event.getParticipantLimit() == 0) {
             request.setStatus(ParticipationRequestStatus.CONFIRMED);
         } else {
             request.setStatus(event.isRequestModeration() ? ParticipationRequestStatus.PENDING : ParticipationRequestStatus.CONFIRMED);
         }
+
         request.setCreated(LocalDateTime.now());
+        log.debug("New ParticipationRequest for create: {}", request);
 
 
         ParticipationRequest savedRequest = requestRepository.save(request);
@@ -84,7 +108,7 @@ public class ParticipationRequestService {
     }
 
 
-    public List<ParticipationRequestDto> getUserRequestsByEventId(Long userId, Long eventId) {
+    public List<ParticipationRequestDto> getUserRequestsByEventId(Long eventId) {
         return requestRepository.findByEventId(eventId).stream()
                 .map(request -> ParticipationRequestToDtoMapper.mapToDto(request))
                 .toList();
@@ -96,8 +120,9 @@ public class ParticipationRequestService {
                 .toList();
     }
 
-    public void updateStatusByIds(ParticipationRequestStatus status, List<Long> ids) {
-        requestRepository.updateStatusByIds(status, ids);
+    @Transactional
+    public void updateStatusByIds(ParticipationRequestUpdateStatusDto requestUpdateStatusDto) {
+        requestRepository.updateStatusByIds(requestUpdateStatusDto.getStatus(), requestUpdateStatusDto.getRequestIds());
     }
 
     public Map<Long, Integer> getConfirmedRequestsForList(List<Long> ids) {

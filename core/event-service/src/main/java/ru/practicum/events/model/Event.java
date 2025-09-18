@@ -55,6 +55,9 @@ public class Event {
     @Column(name = "initiator_id")
     private Long initiatorId;
 
+    @Column(name = "initiator_name")
+    private String initiatorName;
+
     @Column(name = "creation_date")
     private LocalDateTime createdOn;
 

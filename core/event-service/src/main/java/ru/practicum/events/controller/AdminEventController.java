@@ -51,7 +51,8 @@ public class AdminEventController implements EventClient {
     }
 
     @GetMapping("/{eventId}")
-    public EventFullDto getEventById(@PathVariable Long id) {
+    public EventFullDto getEventById(@PathVariable("eventId") Long id) {
+        log.info("Request for event by id {}", id);
         return adminEventService.getEventById(id);
     }
 }
