@@ -51,17 +51,24 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     }
 
     @Override
-    public Event getEventAnyStatusWithViews(Long id) {
+    public EventFullDto getEventAnyStatusWithViews(Long id) {
         //Attention: this method works without saving views!
-        Event event = eventRepository.getSingleEvent(id);
-        if (event == null) {
-                throw new EntityNotFoundException("Event with " + id + " not found");
+
+        if (!eventRepository.existsById(id)) {
+            throw new EntityNotFoundException("Event with " + id + " not found");
         }
+
+        Event event = eventRepository.getSingleEvent(id);
+
+        if (event == null) {
+            throw new EntityNotFoundException("Event with " + id + " not found");
+        }
+
         if (!event.getState().equals(StateEvent.PUBLISHED)) {
             throw new EventNotPublishedException("There is no published event id " + event.getId());
         }
         event.setViews(getEventsViews(event.getId(), event.getPublishedOn()));
-        return event;
+        return EventMapper.toEventFullDto(event);
     }
 
     public List<Event> getEventsByListIds(List<Long> ids) {

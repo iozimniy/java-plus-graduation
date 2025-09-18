@@ -1,26 +1,26 @@
-package ru.practicum.comments.dto;
+package ru.practicum.comment.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ru.practicum.comments.model.CommentsStatus;
-import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.comment.constants.CommentsStatus;
 
 import java.time.LocalDateTime;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class CommentOutputDto {
-
+public class CommentDto {
     private Long id;
 
     private Long userId;
 
-    private EventShortDto event;
+    private Long eventId;
 
+    @NotBlank
     private String text;
 
     private LocalDateTime created;

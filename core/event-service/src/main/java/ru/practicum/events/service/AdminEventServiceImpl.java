@@ -13,6 +13,7 @@ import org.springframework.util.CollectionUtils;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.repository.CategoryRepository;
 import ru.practicum.event.dto.EventFullDto;
+import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.UpdateEventAdminRequest;
 import ru.practicum.events.mapper.EventMapper;
 import ru.practicum.events.model.Event;
@@ -160,5 +161,12 @@ public class AdminEventServiceImpl implements AdminEventService {
         } else if (stateAction.equals(EventStateAction.REJECT_EVENT)) {
             event.setState(StateEvent.CANCELED);
         }
+    }
+
+    public EventShortDto getEventShortDto(Long eventId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(
+                () -> new EntityNotFoundException("Event with id=" + eventId + " was not found"));
+
+        return EventMapper.toEventShortDto(event);
     }
 }

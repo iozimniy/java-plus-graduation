@@ -1,6 +1,7 @@
 package ru.practicum.events.service;
 
 import ru.practicum.event.dto.EventFullDto;
+import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.UpdateEventAdminRequest;
 
 import java.time.LocalDateTime;
@@ -21,4 +22,6 @@ public interface AdminEventService {
     EventFullDto updateEvent(Long eventId, UpdateEventAdminRequest updateEventAdminRequest);
 
     EventFullDto getEventById(Long id);
+
+    EventShortDto getEventShortDto(Long id);
 }

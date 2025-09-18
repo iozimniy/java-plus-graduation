@@ -1,19 +1,19 @@
-package ru.practicum.comments.mapper;
+package ru.practicum.mapper;
 
 import org.springframework.stereotype.Component;
-import ru.practicum.comments.dto.CommentEconomDto;
-import ru.practicum.comments.dto.CommentOutputDto;
-import ru.practicum.comments.model.Comment;
-import ru.practicum.events.mapper.EventMapper;
+import ru.practicum.comment.dto.CommentEconomDto;
+import ru.practicum.comment.dto.CommentOutputDto;
+import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.model.Comment;
 
 @Component
 public class CommentMapper {
 
-    public static CommentOutputDto commentToOutputDto(Comment comment) {
+    public static CommentOutputDto commentToOutputDto(Comment comment, EventShortDto eventShortDto) {
         return CommentOutputDto.builder()
                 .id(comment.getId())
                 .userId(comment.getUserId())
-                .event(EventMapper.toEventShortDto(comment.getEvent()))
+                .event(eventShortDto)
                 .text(comment.getText())
                 .created(comment.getCreated())
                 .status(comment.getStatus())
@@ -24,7 +24,7 @@ public class CommentMapper {
         return CommentEconomDto.builder()
                 .id(comment.getId())
                 .userId(comment.getUserId())
-                .eventId(comment.getEvent().getId())
+                .eventId(comment.getEventId())
                 .text(comment.getText())
                 .created(comment.getCreated())
                 .status(comment.getStatus())

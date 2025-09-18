@@ -1,4 +1,4 @@
-package ru.practicum.comments.service;
+package ru.practicum.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -9,26 +9,26 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.practicum.comments.dto.CommentDto;
-import ru.practicum.comments.dto.CommentEconomDto;
-import ru.practicum.comments.dto.CommentOutputDto;
-import ru.practicum.comments.dto.CommentPagedDto;
-import ru.practicum.comments.mapper.CommentMapper;
-import ru.practicum.comments.model.Comment;
-import ru.practicum.comments.model.CommentsOrder;
-import ru.practicum.comments.model.CommentsStatus;
-import ru.practicum.comments.repository.CommentRepository;
+import ru.practicum.comment.dto.CommentDto;
+import ru.practicum.comment.dto.CommentEconomDto;
+import ru.practicum.comment.dto.CommentOutputDto;
+import ru.practicum.comment.dto.CommentPagedDto;
+import ru.practicum.event.client.EventClient;
+import ru.practicum.event.dto.EventShortDto;
+import ru.practicum.mapper.CommentMapper;
+import ru.practicum.model.Comment;
+import ru.practicum.comment.constants.CommentsOrder;
+import ru.practicum.comment.constants.CommentsStatus;
 import ru.practicum.commons.errors.AccessDeniedException;
 import ru.practicum.commons.errors.ForbiddenActionException;
-import ru.practicum.events.repository.EventRepository;
-import ru.practicum.events.service.PublicEventsService;
+import ru.practicum.repository.CommentRepository;
 import ru.practicum.user.client.UserClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.springframework.data.jpa.domain.AbstractPersistable_.id;
+import static ru.practicum.mapper.CommentMapper.commentToOutputDto;
 
 @Slf4j
 @Service
@@ -38,9 +38,7 @@ public class CommentServiceImpl implements CommentService {
 
     private final UserClient userClient;
 
-    private final PublicEventsService publicEventsService;
-
-    private final EventRepository eventRepository;
+    private final EventClient eventClient;
 
     private final CommentRepository commentRepository;
 
@@ -55,8 +53,10 @@ public class CommentServiceImpl implements CommentService {
         if (sort == null)
             throw new IllegalArgumentException("Sort parameter cannot be null.");
 
-        eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Event with " + id + " not found"));
+//        eventRepository.findById(eventId)
+//                .orElseThrow(() -> new EntityNotFoundException("Event with " + id + " not found"));
+
+        EventShortDto eventShortDto = eventClient.getShortEvent(eventId);
 
         Sort sortType = sort == CommentsOrder.NEWEST ?
                 Sort.by("id").descending() : Sort.by("id").ascending();
@@ -67,7 +67,7 @@ public class CommentServiceImpl implements CommentService {
                 .findByEventIdAndStatus(eventId, CommentsStatus.PUBLISHED, pageable);
 
         List<CommentOutputDto> comments = commentPage.getContent().stream()
-                .map(CommentMapper::commentToOutputDto)
+                .map(comment -> commentToOutputDto(comment, eventShortDto))
                 .collect(Collectors.toList());
 
         return CommentPagedDto.builder()
@@ -80,9 +80,18 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public CommentEconomDto addComment(Long userId, CommentDto commentDto) {
+
+        try {
+            eventClient.getEventAnyStatusWithViews(commentDto.getEventId());
+        } catch (Exception e) {
+            log.error("Request for get event id {} with any status with views is failed with error {}",
+                    commentDto.getEventId(), e);
+        }
+
         Comment comment = Comment.builder()
                 .userId(userClient.getUser(userId).getId())
-                .event(publicEventsService.getEventAnyStatusWithViews(commentDto.getEventId()))
+                .eventId(commentDto.getEventId())
+                //.event(publicEventsService.getEventAnyStatusWithViews(commentDto.getEventId()))
                 .text(commentDto.getText())
                 .created(LocalDateTime.now())
                 .status(CommentsStatus.PUBLISHED)
