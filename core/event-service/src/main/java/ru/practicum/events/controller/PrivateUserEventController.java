@@ -13,11 +13,14 @@ import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventUserRequest;
 import ru.practicum.events.service.PrivateUserEventService;
 import ru.practicum.request.dto.ParticipationRequestDto;
+import ru.practicum.user.client.UserClient;
 import ru.practicum.user.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.user.dto.EventRequestStatusUpdateResult;
 import ru.practicum.user.dto.GetUserEventsDto;
+import ru.practicum.user.dto.UserDto;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "/users/{userId}/events")
@@ -26,6 +29,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PrivateUserEventController {
     private final PrivateUserEventService privateUserService;
+
+    private final UserClient userClient;
 
 
     @GetMapping
@@ -48,7 +53,10 @@ public class PrivateUserEventController {
     public ResponseEntity<EventFullDto> addNewEvent(@PathVariable("userId") Long userId,
                                                     @Valid @RequestBody NewEventDto eventDto) {
         log.info("\nRequest for adding new event {}", eventDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(privateUserService.addNewEvent(userId, eventDto));
+
+        UserDto user = getUser(userId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(privateUserService.addNewEvent(user, eventDto));
     }
 
     @PatchMapping("/{eventId}")
@@ -56,7 +64,10 @@ public class PrivateUserEventController {
                                                         @PathVariable("eventId") Long eventId,
                                                         @Valid @RequestBody UpdateEventUserRequest updateDto) {
         log.info("\nRequest for updating existing event {}", updateDto);
-        return ResponseEntity.status(HttpStatus.OK).body(privateUserService.updateUserEvent(userId, eventId, updateDto));
+
+        UserDto userDto = getUser(userId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(privateUserService.updateUserEvent(userDto, eventId, updateDto));
     }
 
     @GetMapping("/{eventId}/requests")
@@ -71,7 +82,23 @@ public class PrivateUserEventController {
                                                                                        @PathVariable("eventId") Long eventId,
                                                                                        @RequestBody EventRequestStatusUpdateRequest request) {
         log.info("RequestIds: {}, Status: {}", request.getRequestIds(), request.getStatus());
-        return ResponseEntity.status(HttpStatus.OK).body(privateUserService.updateUserEventRequest(userId, eventId, request));
+
+        UserDto userDto = getUser(userId);
+
+        return ResponseEntity.status(HttpStatus.OK).body(privateUserService.updateUserEventRequest(userDto, eventId, request));
+    }
+
+    private UserDto getUser(Long userId) {
+
+        UserDto user = null;
+
+        try {
+            user = userClient.getUser(userId);
+        } catch (Exception e) {
+            log.error("Request for get user with id {} to userClient is failed with message {}", userId, e);
+        }
+
+        return user;
     }
 
 }

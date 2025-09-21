@@ -11,13 +11,8 @@ import java.util.List;
 public interface EventRepositoryCustom {
     Page<Event> findAllWithBuilder(BooleanBuilder builder, Pageable pageable);
 
-    Event findEventWithStatus(Long eventId, ParticipationRequestStatus status);
+    List<Event> searchEvents(BooleanBuilder eventCondition);
 
-    List<Event> searchEvents(BooleanBuilder eventCondition, ParticipationRequestStatus status,
-                             boolean isAvailable, int page, int size);
-
-    List<Event> findEventsWithConfirmedCount(List<Long> eventIds);
-
-    Event getSingleEvent(Long id);
+    List<Event> findEvents(List<Long> eventIds);
 
 }

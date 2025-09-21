@@ -1,6 +1,7 @@
 package ru.practicum.events.service;
 
 import com.querydsl.core.BooleanBuilder;
+import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import ru.practicum.events.model.Event;
 import ru.practicum.events.model.QEvent;
 import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.repository.EventRepository;
+import ru.practicum.request.client.ParticipationRequestClient;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 
 import java.time.LocalDateTime;
@@ -36,9 +38,24 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     private final ClientAdapter clientAdapter;
 
+    private final ParticipationRequestClient requestClient;
+
     @Override
     public Event getEvent(Long id) {
-        return eventRepository.findEventWithStatus(id, ParticipationRequestStatus.CONFIRMED);
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Event with id=" + id + " was not found"));
+
+        Integer confirmedCount = null;
+
+        try {
+            confirmedCount = requestClient.getConfirmedRequestsCount(id);
+        } catch (FeignException e) {
+            log.error("ParticipationRequestClient error: getConfirmedRequestsCount(eventId) with {}", e);
+        }
+
+        event.setConfirmedRequests(confirmedCount);
+
+        return event;
     }
 
     @Override
@@ -54,15 +71,18 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     public EventFullDto getEventAnyStatusWithViews(Long id) {
         //Attention: this method works without saving views!
 
-        if (!eventRepository.existsById(id)) {
-            throw new EntityNotFoundException("Event with " + id + " not found");
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Event with id=" + id + " was not found"));
+
+        Integer confirmedCount = null;
+
+        try {
+            confirmedCount = requestClient.getConfirmedRequestsCount(id);
+        } catch (FeignException e) {
+            log.error("ParticipationRequestClient error: getConfirmedRequestsCount(eventId) with {}", e);
         }
 
-        Event event = eventRepository.getSingleEvent(id);
-
-        if (event == null) {
-            throw new EntityNotFoundException("Event with " + id + " not found");
-        }
+        event.setConfirmedRequests(confirmedCount);
 
         if (!event.getState().equals(StateEvent.PUBLISHED)) {
             throw new EventNotPublishedException("There is no published event id " + event.getId());
@@ -75,7 +95,10 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         if (CollectionUtils.isEmpty(ids))
             return List.of();
 
-        List<Event> events = eventRepository.findEventsWithConfirmedCount(ids);
+        List<Event> events = eventRepository.findEvents(ids);
+
+        events = addConfirmedCounts(events);
+
         if (CollectionUtils.isEmpty(events))
             return events;
 
@@ -149,12 +172,26 @@ public class PublicEventsServiceImpl implements PublicEventsService {
             builder.and(QEvent.event.eventDate.between(start, end));
         }
 
-        List<Event> events = eventRepository.searchEvents(builder, ParticipationRequestStatus.CONFIRMED,
-                searchEventsParams.getOnlyAvailable(), searchEventsParams.getFrom(), searchEventsParams.getSize());
+        List<Event> events = eventRepository.searchEvents(builder);
         if (events.isEmpty()) {
             clientAdapter.saveView(lookEventDto.getIp(), "/events");
             return List.of();
         }
+
+        events = addConfirmedCounts(events);
+
+        if (searchEventsParams.getOnlyAvailable()) {
+            events.stream()
+                    .filter(ev -> ev.getParticipantLimit() == 0 ||
+                            ev.getParticipantLimit() > ev.getConfirmedRequests())
+                    .toList();
+        }
+
+        int toIndex = Math.min(searchEventsParams.getFrom() + searchEventsParams.getSize(), events.size());
+        if (searchEventsParams.getFrom() >= events.size()) {
+            return List.of();
+        }
+        events = events.subList(searchEventsParams.getFrom(), toIndex);
 
         log.info("PublicEventsServiceImpl.getFilteredEvents: events {}", events);
         // Если не было установлено rangeEnd, устанавливаем
@@ -206,5 +243,17 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         for (Event e : events) {
             e.setViews(workMap.getOrDefault(e.getId(), 0));
         }
+    }
+
+    private List<Event> addConfirmedCounts(List<Event> events) {
+
+        List<Long> ids = events.stream().map(Event::getId).toList();
+        Map<Long, Integer> eventsConfirmedCounts = requestClient.getConfirmedRequestsCountForList(ids);
+
+        for (Event foundEvent : events) {
+            foundEvent.setConfirmedRequests(eventsConfirmedCounts.getOrDefault(foundEvent.getId(), 0));
+        }
+
+        return events;
     }
 }

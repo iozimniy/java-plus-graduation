@@ -43,31 +43,31 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
                 .toList();
     }
 
-    public int getConfirmedRequests(Long eventId) {
+    public Integer getConfirmedRequests(Long eventId) {
         return requestRepository
                 .countConfirmedRequestsByStatusAndEventId(ParticipationRequestStatus.CONFIRMED, eventId);
     }
 
     @Transactional
-    public ParticipationRequestDto addParticipationRequest(Long userId, Long eventId) {
-        log.info("Request for add ParticipationRequest with user id {} and event id {}", userId, eventId);
-        UserDto userDto = null;
+    public ParticipationRequestDto addParticipationRequest(UserDto userDto, Long eventId, EventFullDto event) {
+        log.info("Request for add ParticipationRequest with user id {} and event id {}", userDto.getId(), eventId);
+//        UserDto userDto = null;
+//
+//        try {
+//            userDto = userClient.getUser(userId);
+//        } catch (Exception e) {
+//            log.error("Request for get user with id {} to userClient is failed with message {}", userId, e);
+//        }
 
-        try {
-            userDto = userClient.getUser(userId);
-        } catch (Exception e) {
-            log.error("Request for get user with id {} to userClient is failed with message {}", userId, e);
-        }
 
+//        EventFullDto event = null;
 
-        EventFullDto event = null;
-
-        try {
-           event = eventClient.getEventById(eventId);
-           log.debug("Event from EventClient: {}", event);
-        } catch (Exception e) {
-            log.error("Request for get event with id {} to eventClient is failed with message {}", eventId, e);
-        }
+//        try {
+//           event = eventClient.getEventById(eventId);
+//           log.debug("Event from EventClient: {}", event);
+//        } catch (Exception e) {
+//            log.error("Request for get event with id {} to eventClient is failed with message {}", eventId, e);
+//        }
 
         long confirmedRequestsCount = getConfirmedRequests(eventId);
 

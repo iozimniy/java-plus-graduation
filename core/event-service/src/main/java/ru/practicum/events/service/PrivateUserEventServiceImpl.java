@@ -1,5 +1,6 @@
 package ru.practicum.events.service;
 
+import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,8 +63,7 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
 
     @Override
     @Transactional
-    public EventFullDto addNewEvent(Long userId, NewEventDto eventDto) {
-        UserDto user = userClient.getUser(userId);
+    public EventFullDto addNewEvent(UserDto user, NewEventDto eventDto) {
         Event event = EventMapper.dtoToEvent(eventDto, user);
 
         eventRepository.save(event);
@@ -73,12 +73,11 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
 
     @Override
     @Transactional
-    public EventFullDto updateUserEvent(Long userId, Long eventId, UpdateEventUserRequest updateDto) {
-        UserDto user = userClient.getUser(userId);
+    public EventFullDto updateUserEvent(UserDto user, Long eventId, UpdateEventUserRequest updateDto) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found with id: " + eventId));
 
-        if (!Objects.equals(event.getInitiatorId(), userId)) {
+        if (!Objects.equals(event.getInitiatorId(), user.getId())) {
             throw new ForbiddenActionException("User is not the event creator");
         }
 
@@ -116,8 +115,7 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
 
     @Override
     @Transactional
-    public EventRequestStatusUpdateResult updateUserEventRequest(Long userId, Long eventId, EventRequestStatusUpdateRequest request) {
-        UserDto user = userClient.getUser(userId);
+    public EventRequestStatusUpdateResult updateUserEventRequest(UserDto user, Long eventId, EventRequestStatusUpdateRequest request) {
         Event event = getEventWithConfirmedRequests(eventId);
 
         List<ParticipationRequestDto> participation = requestClient.getRequestsByIds(request.getRequestIds());
@@ -235,6 +233,20 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
     }
 
     public Event getEventWithConfirmedRequests(Long eventId) {
-        return eventRepository.findEventWithStatus(eventId, ParticipationRequestStatus.CONFIRMED);
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event with id=" + eventId + " was not found"));
+
+        Integer confirmedCount = null;
+
+        try {
+            confirmedCount = requestClient.getConfirmedRequestsCount(eventId);
+        } catch (FeignException e) {
+            log.error("ParticipationRequestClient error: getConfirmedRequestsCount(eventId) with {}", e);
+        }
+
+        event.setConfirmedRequests(confirmedCount);
+
+        return event;
     }
 }

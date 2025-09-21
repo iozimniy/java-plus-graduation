@@ -22,9 +22,11 @@ import ru.practicum.events.model.QEvent;
 import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.repository.EventRepository;
 import ru.practicum.events.validation.AdminEventValidator;
+import ru.practicum.request.client.ParticipationRequestClient;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -35,6 +37,7 @@ public class AdminEventServiceImpl implements AdminEventService {
 
     private final EventRepository eventRepository;
     private final CategoryRepository categoryRepository;
+    private final ParticipationRequestClient requestClient;
 
     @Override
     public List<EventFullDto> getEvents(
@@ -88,7 +91,8 @@ public class AdminEventServiceImpl implements AdminEventService {
                 .collect(Collectors.toList());
 
         // Получаем события с количеством подтвержденных запросов
-        List<Event> eventsWithConfirmedRequests = eventRepository.findEventsWithConfirmedCount(eventIds);
+        List<Event> events = eventRepository.findEvents(eventIds);
+        events = addConfirmedCounts(events);
 
         // Преобразуем сущности Event в EventFullDto
         return eventsPage.getContent().stream()
@@ -168,5 +172,17 @@ public class AdminEventServiceImpl implements AdminEventService {
                 () -> new EntityNotFoundException("Event with id=" + eventId + " was not found"));
 
         return EventMapper.toEventShortDto(event);
+    }
+
+    private List<Event> addConfirmedCounts(List<Event> events) {
+
+        List<Long> ids = events.stream().map(Event::getId).toList();
+        Map<Long, Integer> eventsConfirmedCounts = requestClient.getConfirmedRequestsCountForList(ids);
+
+        for (Event foundEvent : events) {
+            foundEvent.setConfirmedRequests(eventsConfirmedCounts.getOrDefault(foundEvent.getId(), 0));
+        }
+
+        return events;
     }
 }

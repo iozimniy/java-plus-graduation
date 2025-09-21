@@ -37,7 +37,7 @@ public class InternalParticipationRequestController implements ParticipationRequ
     }
 
     @GetMapping("/count/confirmed/{eventId}")
-    public int getConfirmedRequestsCount(@PathVariable("eventId") Long eventId) {
+    public Integer getConfirmedRequestsCount(@PathVariable("eventId") Long eventId) {
         return participationRequestService.getConfirmedRequests(eventId);
     }
 

@@ -21,7 +21,7 @@ public interface ParticipationRequestClient {
     void updateStatusByIds(@RequestBody ParticipationRequestUpdateStatusDto requestUpdateStatusDto);
 
     @GetMapping("/count/confirmed/{eventId}")
-    int getConfirmedRequestsCount(@PathVariable("eventId") Long eventId);
+    Integer getConfirmedRequestsCount(@PathVariable("eventId") Long eventId);
 
     @PostMapping("/count/confirmed/list")
     Map<Long, Integer> getConfirmedRequestsCountForList(@RequestBody List<Long> ids);
