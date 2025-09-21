@@ -20,6 +20,7 @@ import ru.practicum.validation.ParticipationRequestValidator;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -51,23 +52,6 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     @Transactional
     public ParticipationRequestDto addParticipationRequest(UserDto userDto, Long eventId, EventFullDto event) {
         log.info("Request for add ParticipationRequest with user id {} and event id {}", userDto.getId(), eventId);
-//        UserDto userDto = null;
-//
-//        try {
-//            userDto = userClient.getUser(userId);
-//        } catch (Exception e) {
-//            log.error("Request for get user with id {} to userClient is failed with message {}", userId, e);
-//        }
-
-
-//        EventFullDto event = null;
-
-//        try {
-//           event = eventClient.getEventById(eventId);
-//           log.debug("Event from EventClient: {}", event);
-//        } catch (Exception e) {
-//            log.error("Request for get event with id {} to eventClient is failed with message {}", eventId, e);
-//        }
 
         long confirmedRequestsCount = getConfirmedRequests(eventId);
 
@@ -126,9 +110,12 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     }
 
     public Map<Long, Integer> getConfirmedRequestsForList(List<Long> ids) {
-        return ids.stream().collect(Collectors.toMap(
-                s -> s,
-                s -> getConfirmedRequests(s)
+
+        List<Object[]> rows = requestRepository.countConfirmedRequestsByEventIdListAndStatusMapping(ParticipationRequestStatus.CONFIRMED, ids);
+
+        return rows.stream().collect(Collectors.toMap(
+           row -> (Long) row[0],
+           row -> ((Long) row[1]).intValue()
         ));
     }
 }

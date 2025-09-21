@@ -10,6 +10,7 @@ import ru.practicum.model.ParticipationRequest;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 public interface ParticipationRequestRepository extends JpaRepository<ParticipationRequest, Long>, QuerydslPredicateExecutor<ParticipationRequest> {
@@ -32,4 +33,7 @@ public interface ParticipationRequestRepository extends JpaRepository<Participat
 
     @Query("SELECT pr FROM ParticipationRequest pr WHERE pr.id IN :ids")
     List<ParticipationRequest> findByIds(@Param("ids") List<Long> ids);
+
+    @Query("SELECT pr.eventId, count(pr) FROM ParticipationRequest pr WHERE pr.eventId IN :ids AND pr.status = :status GROUP BY pr.eventId")
+    List<Object[]> countConfirmedRequestsByEventIdListAndStatusMapping(@Param("status") ParticipationRequestStatus status, @Param("ids") List<Long> ids);
 }
