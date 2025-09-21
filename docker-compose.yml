@@ -33,6 +33,60 @@ services:
     volumes:
       - ./src/main/resources:/docker-entrypoint-initdb.d
 
+  ewm-database-user:
+    container_name: ewm-database-user
+    image: postgres:16.1
+    ports:
+      - "6544:5432"
+    environment:
+      POSTGRES_DB: ewm-database-user
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      interval: 5s
+      retries: 10
+      timeout: 5s
+    volumes:
+      - ./src/main/resources:/docker-entrypoint-initdb.d
+
+  ewm-database-request:
+    container_name: ewm-database-request
+    image: postgres:16.1
+    ports:
+      - "6545:5432"
+    environment:
+      POSTGRES_DB: ewm-database-request
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      interval: 5s
+      retries: 10
+      timeout: 5s
+    volumes:
+      - ./src/main/resources:/docker-entrypoint-initdb.d
+
+  ewm-database-comment:
+    container_name: ewm-database-comment
+    image: postgres:16.1
+    ports:
+      - "6546:5432"
+    environment:
+      POSTGRES_DB: ewm-database-comment
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      interval: 5s
+      retries: 10
+      timeout: 5s
+    volumes:
+      - ./src/main/resources:/docker-entrypoint-initdb.d
+
 volumes:
   ewm-stats-data:
   ewm-database-data:
+  ewm-database-user-data:
+  ewm-database-request-data:
+  ewm-database-comment-data:

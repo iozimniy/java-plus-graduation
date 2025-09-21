@@ -14,6 +14,7 @@ import ru.practicum.comment.dto.CommentEconomDto;
 import ru.practicum.comment.dto.CommentOutputDto;
 import ru.practicum.comment.dto.CommentPagedDto;
 import ru.practicum.event.client.EventClient;
+import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.mapper.CommentMapper;
 import ru.practicum.model.Comment;
@@ -81,8 +82,10 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     public CommentEconomDto addComment(Long userId, CommentDto commentDto) {
 
+        EventFullDto eventFullDto = null;
+
         try {
-            eventClient.getEventAnyStatusWithViews(commentDto.getEventId());
+            eventFullDto = eventClient.getEventAnyStatusWithViews(commentDto.getEventId());
         } catch (Exception e) {
             log.error("Request for get event id {} with any status with views is failed with error {}",
                     commentDto.getEventId(), e);
@@ -90,8 +93,7 @@ public class CommentServiceImpl implements CommentService {
 
         Comment comment = Comment.builder()
                 .userId(userClient.getUser(userId).getId())
-                .eventId(commentDto.getEventId())
-                //.event(publicEventsService.getEventAnyStatusWithViews(commentDto.getEventId()))
+                .eventId(eventFullDto.getId())
                 .text(commentDto.getText())
                 .created(LocalDateTime.now())
                 .status(CommentsStatus.PUBLISHED)
