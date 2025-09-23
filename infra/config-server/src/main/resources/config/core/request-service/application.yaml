@@ -1,0 +1,22 @@
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+  sql:
+    init:
+      mode: always
+
+  datasource:
+    url: jdbc:postgresql://localhost:6545/ewm-database-request
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+logging:
+  level:
+    ru.practicum: DEBUG

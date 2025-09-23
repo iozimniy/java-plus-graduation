@@ -3,10 +3,33 @@ spring:
     gateway:
       discovery.locator.enabled: true
       routes:
-        - id: main_service_route
-          uri: lb://main-service
+#        - id: main_service_route
+#          uri: lb://main-service
+#          predicates:
+#            - Path=/**
+        - id: user-service_route
+          uri: lb://user-service
+          predicates:
+            - Path=/admin/users/**
+        - id: request_service_route
+          uri: lb://request-service
+          predicates:
+            - Path=/users/*/requests/**
+        - id: comment_admin_service_route
+          uri: lb://comment-service
+          predicates:
+            - Path=/admin/comments/**
+        - id: comment_user_service_route
+          uri: lb://comment-service
+          predicates:
+            - Path=/users/*/comments/**
+        - id: comment_service_route
+          uri: lb://comment-service
+          predicates:
+            - Path=/comments/**
+        - id: event_service_route
+          uri: lb://event-service
           predicates:
             - Path=/**
-
 server:
   port: 8080
