@@ -5,8 +5,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.client.CollectorClient;
 import ru.practicum.event.client.EventClient;
 import ru.practicum.event.dto.EventFullDto;
+import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.mapper.ParticipationRequestToDtoMapper;
 import ru.practicum.model.ParticipationRequest;
 import ru.practicum.repository.ParticipationRequestRepository;
@@ -17,6 +19,7 @@ import ru.practicum.user.client.UserClient;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.validation.ParticipationRequestValidator;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +38,8 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     private final UserClient userClient;
 
     private final ParticipationRequestValidator participationRequestValidator;
+
+    private final CollectorClient collectorClient;
 
     public List<ParticipationRequestDto> getUserRequests(Long userId) {
         userClient.getUser(userId);
@@ -77,7 +82,23 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
 
 
         ParticipationRequest savedRequest = requestRepository.save(request);
+
+        try {
+            collectorClient.sendUserAction(userDto.getId(), eventId, ActionTypeProto.ACTION_REGISTER, Instant.now());
+        } catch (Exception e) {
+            log.error("Request to CollectorClient for register with userId {}, eventId {} failed",
+                    userDto.getId(), eventId);
+        }
+
         return ParticipationRequestToDtoMapper.mapToDto(savedRequest);
+    }
+
+    public ParticipationRequestDto getRequest(Long userId, Long eventId) {
+        ParticipationRequest request = requestRepository.findByUserIdAndEventId(userId, eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Request with userId=" + userId
+                        + " and eventId=" + eventId +  " was not found"));
+
+        return ParticipationRequestToDtoMapper.mapToDto(request);
     }
 
     @Transactional

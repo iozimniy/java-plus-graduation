@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import ru.practicum.category.mapper.CategoryDtoMapper;
 import ru.practicum.category.model.Category;
-import ru.practicum.config.DateConfig;
+import ru.practicum.commons.config.DateConfig;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.LocationDto;
@@ -57,7 +57,7 @@ public class EventMapper {
                 .createdOn(LocalDateTime.now())
                 .publishedOn(LocalDateTime.now())
                 .state(StateEvent.PENDING)
-                .views(0)
+                .rating(0.0)
                 .build();
     }
 
@@ -121,5 +121,4 @@ public class EventMapper {
                 .lon(location.getLon())
                 .build();
     }
-
 }

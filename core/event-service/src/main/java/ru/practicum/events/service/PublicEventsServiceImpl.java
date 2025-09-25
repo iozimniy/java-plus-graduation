@@ -9,22 +9,27 @@ import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import ru.practicum.client.CollectorClient;
+import ru.practicum.commons.config.DateConfig;
 import ru.practicum.commons.errors.EventNotPublishedException;
-import ru.practicum.config.DateConfig;
+import ru.practicum.commons.errors.ForbiddenActionException;
 import ru.practicum.controller.ClientAdapter;
 import ru.practicum.dto.ReadEndpointHitDto;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.LookEventDto;
 import ru.practicum.event.dto.SearchEventsParams;
 import ru.practicum.events.mapper.EventMapper;
 import ru.practicum.events.model.Event;
 import ru.practicum.events.model.QEvent;
 import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.repository.EventRepository;
+import ru.practicum.ewm.stats.proto.ActionTypeProto;
+import ru.practicum.ewm.stats.proto.UserActionProto;
 import ru.practicum.request.client.ParticipationRequestClient;
 import ru.practicum.request.constants.ParticipationRequestStatus;
+import ru.practicum.request.dto.ParticipationRequestDto;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -36,7 +41,8 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     private final EventRepository eventRepository;
 
-    private final ClientAdapter clientAdapter;
+    //private final ClientAdapter clientAdapter;
+    private final CollectorClient collectorClient;
 
     private final ParticipationRequestClient requestClient;
 
@@ -58,6 +64,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         return event;
     }
 
+    // TODO: тут получаем хиты, а нужно получать рейтинг
     @Override
     public int getEventsViews(long id, LocalDateTime publishedOn) {
         List<String> uris = List.of("/events/" + id);
@@ -87,8 +94,45 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         if (!event.getState().equals(StateEvent.PUBLISHED)) {
             throw new EventNotPublishedException("There is no published event id " + event.getId());
         }
+
+        //TODO: тут сетим просмотры, заменить на рейтинг
         event.setViews(getEventsViews(event.getId(), event.getPublishedOn()));
         return EventMapper.toEventFullDto(event);
+    }
+
+    @Override
+    public void likeEvent(Long id, long userId) throws IllegalAccessException {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Event with id=" + id + " was not found"));
+
+        //проверка, что мероприятие уже завершено
+        if (event.getEventDate().isAfter(LocalDateTime.now())) {
+            throw new IllegalAccessException("Event date is in the future");
+        }
+
+        //получаем заявку
+        ParticipationRequestDto requestDto = null;
+
+        try {
+            requestDto = requestClient.getRequest(userId, id);
+        } catch (EntityNotFoundException e) {
+            throw new IllegalAccessException("Request for event not found");
+        } catch (Exception e) {
+            log.error("Request for get ParticipationRequest with userId {} and eventId {} failed", userId, id);
+        }
+
+        //проверяем статус заявки
+        if (!requestDto.getStatus().equals(ParticipationRequestStatus.CONFIRMED)) {
+            throw new IllegalAccessException("Request status is not confirmed");
+        }
+
+        //сохраняем лайк
+        try {
+            collectorClient.sendUserAction(userId, id, ActionTypeProto.ACTION_LIKE, Instant.now());
+        } catch (Exception e) {
+            log.error("Request for like event with eventId {} by user with userId {} failed", id, userId);
+        }
     }
 
     public List<Event> getEventsByListIds(List<Long> ids) {
@@ -110,7 +154,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         List<String> uris = events.stream()
                 .map(event -> "/event/" + event.getId())
                 .toList();
-
+        // TODO: тут получаем просмотры, а нужно получать рейтинг
         List<ReadEndpointHitDto> acceptedList = clientAdapter.getHits(start.format(DateConfig.FORMATTER),
                 LocalDateTime.now().format(DateConfig.FORMATTER), uris, true);
         // Заносим значения views в список events
@@ -119,23 +163,26 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     }
 
     @Override
-    public EventFullDto getEventInfo(LookEventDto lookEventDto) {
-        log.info("\nPublicEventsServiceImpl.getEventInfo: accepted {}", lookEventDto);
-        Event event = getEvent(lookEventDto.getId());
+    public EventFullDto getEventInfo(Long id, Long userId) {
+        log.info("\nPublicEventsServiceImpl.getEventInfo: accepted {}", id);
+        Event event = getEvent(id);
         log.info("\nPublicEventsServiceImpl.getEventsViews: event {}", event);
         if (!event.getState().equals(StateEvent.PUBLISHED)) {
             throw new EventNotPublishedException("There is no published event id " + event.getId());
         }
+
+        // TODO: тут сетим просмотры, а нужно сетить рейтинг
         // Получаем views
         event.setViews(getEventsViews(event.getId(), event.getPublishedOn()));
+
         //Имеем новый просмотр - сохраняем его
-        clientAdapter.saveView(lookEventDto.getIp(), lookEventDto.getUri());
+        collectorClient.sendUserAction(userId, id, ActionTypeProto.ACTION_VIEW, Instant.now());
 
         return EventMapper.toEventFullDto(event);
     }
 
     @Override
-    public List<EventShortDto> getFilteredEvents(SearchEventsParams searchEventsParams, LookEventDto lookEventDto) {
+    public List<EventShortDto> getFilteredEvents(SearchEventsParams searchEventsParams) {
         log.info("\nPublicEventsServiceImpl.getFilteredEvents: {}", searchEventsParams);
 
         BooleanBuilder builder = new BooleanBuilder();
@@ -173,10 +220,6 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         }
 
         List<Event> events = eventRepository.searchEvents(builder);
-        if (events.isEmpty()) {
-            clientAdapter.saveView(lookEventDto.getIp(), "/events");
-            return List.of();
-        }
 
         events = addConfirmedCounts(events);
 
@@ -204,6 +247,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
             uris.add("/events/" + e.getId());
         }
 
+        // TODO: тут получаем рейтинг (вместо просмотров) мероприятия, нужно заменить, когда будет реализован
         List<ReadEndpointHitDto> acceptedList = clientAdapter.getHits(searchEventsParams.getRangeStart(),
                 searchEventsParams.getRangeEnd(), uris, true);
         viewsToEvents(acceptedList, events);
@@ -222,17 +266,19 @@ public class PublicEventsServiceImpl implements PublicEventsService {
                     .sorted(Comparator.comparing(Event::getEventDate)) // Сортируем по eventDate
                     .toList();
         } else {
+            // TODO: должны сортировать по рейтингу
             sortedEvents = events.stream()
                     .sorted(Comparator.comparingInt(Event::getViews).reversed()) // Сортируем по views
                     .toList();
         }
 
-        uris.add("/events");
-        clientAdapter.saveHitsGroup(uris, lookEventDto.getIp());
         log.info("\n Final list {}", sortedEvents);
         return EventMapper.toListEventShortDto(sortedEvents);
     }
 
+    // TODO: заменить views на rating
+    // тут мы сетим рейтинг мероприятия. Когда функционал рейтинга будует реализован,
+    // нужно переписать этот метод
     public void viewsToEvents(List<ReadEndpointHitDto> viewsList, List<Event> events) {
         // Заносим значения views в список events
         Map<Integer, Integer> workMap = new HashMap<>();

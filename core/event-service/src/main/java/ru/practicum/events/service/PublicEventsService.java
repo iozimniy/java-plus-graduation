@@ -1,5 +1,6 @@
 package ru.practicum.events.service;
 
+import jakarta.validation.constraints.Min;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.LookEventDto;
@@ -15,10 +16,11 @@ public interface PublicEventsService {
 
     int getEventsViews(long id, LocalDateTime eventDate);
 
-    EventFullDto getEventInfo(LookEventDto lookEventDto);
+    EventFullDto getEventInfo(Long id, Long userId);
 
-    List<EventShortDto> getFilteredEvents(SearchEventsParams searchEventsParams, LookEventDto lookEventDto);
+    List<EventShortDto> getFilteredEvents(SearchEventsParams searchEventsParams);
 
     EventFullDto getEventAnyStatusWithViews(Long id);
 
+    void likeEvent(@Min(value = 1, message = "ID must be positive") Long id, long userId) throws IllegalAccessException;
 }

@@ -45,4 +45,10 @@ public class InternalParticipationRequestController implements ParticipationRequ
     public Map<Long, Integer> getConfirmedRequestsCountForList(@RequestBody List<Long> ids) {
         return participationRequestService.getConfirmedRequestsForList(ids);
     }
+
+    @GetMapping("{userId}/{eventId}")
+    public ParticipationRequestDto getRequest(@PathVariable("userId") Long userId,
+                                              @PathVariable("eventId") Long eventId) {
+        return participationRequestService.getRequest(userId, eventId);
+    }
 }
