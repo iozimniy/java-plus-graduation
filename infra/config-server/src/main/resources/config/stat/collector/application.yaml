@@ -16,4 +16,7 @@ kafka:
 
 logging:
   level:
-    ru.yandex.practicum.telemetry: DEBUG
+    ru.practicum.stat: TRACE
+    org:
+      hibernate.SQL: TRACE
+      springframework: INFO
