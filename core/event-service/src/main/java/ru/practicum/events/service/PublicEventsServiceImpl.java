@@ -10,11 +10,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import ru.practicum.client.CollectorClient;
+import ru.practicum.client.RecommendationsClient;
 import ru.practicum.commons.config.DateConfig;
 import ru.practicum.commons.errors.EventNotPublishedException;
-import ru.practicum.commons.errors.ForbiddenActionException;
-import ru.practicum.controller.ClientAdapter;
-import ru.practicum.dto.ReadEndpointHitDto;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.SearchEventsParams;
@@ -24,7 +22,7 @@ import ru.practicum.events.model.QEvent;
 import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.repository.EventRepository;
 import ru.practicum.ewm.stats.proto.ActionTypeProto;
-import ru.practicum.ewm.stats.proto.UserActionProto;
+import ru.practicum.ewm.stats.proto.RecommendedEventProto;
 import ru.practicum.request.client.ParticipationRequestClient;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 import ru.practicum.request.dto.ParticipationRequestDto;
@@ -32,6 +30,8 @@ import ru.practicum.request.dto.ParticipationRequestDto;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -41,7 +41,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
     private final EventRepository eventRepository;
 
-    //private final ClientAdapter clientAdapter;
+    private RecommendationsClient recommendationsClient;
     private final CollectorClient collectorClient;
 
     private final ParticipationRequestClient requestClient;
@@ -64,14 +64,11 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         return event;
     }
 
-    // TODO: тут получаем хиты, а нужно получать рейтинг
     @Override
-    public int getEventsViews(long id, LocalDateTime publishedOn) {
-        List<String> uris = List.of("/events/" + id);
-        List<ReadEndpointHitDto> res = clientAdapter.getHits(publishedOn.format(DateConfig.FORMATTER),
-                LocalDateTime.now().format(DateConfig.FORMATTER), uris, true);
-        log.info("\nPublicEventsServiceImpl.getEventsViews: res {}", res);
-        return (CollectionUtils.isEmpty(res)) ? 0 : res.getFirst().getHits();
+    public Double getEventRating(long id) {
+        Stream<RecommendedEventProto> stream = recommendationsClient.getRatings(List.of(id));
+        List<Double> ratings = stream.map(proto -> proto.getScore()).toList();
+        return ratings.getFirst();
     }
 
     @Override
@@ -95,8 +92,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
             throw new EventNotPublishedException("There is no published event id " + event.getId());
         }
 
-        //TODO: тут сетим просмотры, заменить на рейтинг
-        event.setViews(getEventsViews(event.getId(), event.getPublishedOn()));
+        event.setRating(getEventRating(event.getId()));
         return EventMapper.toEventFullDto(event);
     }
 
@@ -143,22 +139,16 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
         events = addConfirmedCounts(events);
 
-        if (CollectionUtils.isEmpty(events))
-            return events;
+        if (CollectionUtils.isEmpty(events)) return events;
 
-        LocalDateTime start = events.stream()
-                .map(Event::getPublishedOn)
-                .min(LocalDateTime::compareTo)
-                .orElseThrow(() ->
-                        new RuntimeException("Internal server error during execution PublicEventsServiceImpl"));
-        List<String> uris = events.stream()
-                .map(event -> "/event/" + event.getId())
-                .toList();
-        // TODO: тут получаем просмотры, а нужно получать рейтинг
-        List<ReadEndpointHitDto> acceptedList = clientAdapter.getHits(start.format(DateConfig.FORMATTER),
-                LocalDateTime.now().format(DateConfig.FORMATTER), uris, true);
+        Map<Long, Double> ratings = recommendationsClient.getRatings(ids)
+                .collect(Collectors.toMap(
+                recommendedEventProto -> recommendedEventProto.getEventId(),
+                recommendedEventProto -> recommendedEventProto.getScore()
+                ));
+
         // Заносим значения views в список events
-        viewsToEvents(acceptedList, events);
+        ratingToEvents(ratings, events);
         return events;
     }
 
@@ -171,9 +161,8 @@ public class PublicEventsServiceImpl implements PublicEventsService {
             throw new EventNotPublishedException("There is no published event id " + event.getId());
         }
 
-        // TODO: тут сетим просмотры, а нужно сетить рейтинг
-        // Получаем views
-        event.setViews(getEventsViews(event.getId(), event.getPublishedOn()));
+        // Получаем rating
+        event.setRating(getEventRating(event.getId()));
 
         //Имеем новый просмотр - сохраняем его
         collectorClient.sendUserAction(userId, id, ActionTypeProto.ACTION_VIEW, Instant.now());
@@ -241,16 +230,18 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         if (searchEventsParams.getRangeEnd() == null) {
             searchEventsParams.setRangeEnd(LocalDateTime.now().format(DateConfig.FORMATTER));
         }
-        // Формируем список uris
-        List<String> uris = new ArrayList<>();
-        for (Event e : events) {
-            uris.add("/events/" + e.getId());
-        }
 
-        // TODO: тут получаем рейтинг (вместо просмотров) мероприятия, нужно заменить, когда будет реализован
-        List<ReadEndpointHitDto> acceptedList = clientAdapter.getHits(searchEventsParams.getRangeStart(),
-                searchEventsParams.getRangeEnd(), uris, true);
-        viewsToEvents(acceptedList, events);
+        //формируем список ids
+
+        List<Long> ids = events.stream().map(event -> event.getId()).toList();
+
+        Map<Long, Double> ratings = recommendationsClient.getRatings(ids)
+                        .collect(Collectors.toMap(
+                                recommendedEventProto -> recommendedEventProto.getEventId(),
+                                recommendedEventProto -> recommendedEventProto.getScore()
+                        ));
+
+        ratingToEvents(ratings, events);
 
         // Сортировка. Для начала проверяем значение параметра сортировки
         String sortParam;
@@ -266,9 +257,8 @@ public class PublicEventsServiceImpl implements PublicEventsService {
                     .sorted(Comparator.comparing(Event::getEventDate)) // Сортируем по eventDate
                     .toList();
         } else {
-            // TODO: должны сортировать по рейтингу
             sortedEvents = events.stream()
-                    .sorted(Comparator.comparingInt(Event::getViews).reversed()) // Сортируем по views
+                    .sorted(Comparator.comparingDouble(Event::getRating).reversed()) // Сортируем по views
                     .toList();
         }
 
@@ -276,19 +266,9 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         return EventMapper.toListEventShortDto(sortedEvents);
     }
 
-    // TODO: заменить views на rating
-    // тут мы сетим рейтинг мероприятия. Когда функционал рейтинга будует реализован,
-    // нужно переписать этот метод
-    public void viewsToEvents(List<ReadEndpointHitDto> viewsList, List<Event> events) {
-        // Заносим значения views в список events
-        Map<Integer, Integer> workMap = new HashMap<>();
-        for (ReadEndpointHitDto r : viewsList) {
-            int i = Integer.parseInt(r.getUri().substring(r.getUri().lastIndexOf("/") + 1));
-            workMap.put(i, r.getHits());
-        }
-        for (Event e : events) {
-            e.setViews(workMap.getOrDefault(e.getId(), 0));
-        }
+    public void ratingToEvents(Map<Long, Double> ratings, List<Event> events) {
+        // Заносим значения ratings в список events
+        events.forEach(event -> event.setRating(ratings.getOrDefault(event.getId(), 0.0)));
     }
 
     private List<Event> addConfirmedCounts(List<Event> events) {

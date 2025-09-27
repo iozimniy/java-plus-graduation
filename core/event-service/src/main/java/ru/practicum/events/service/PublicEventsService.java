@@ -3,18 +3,16 @@ package ru.practicum.events.service;
 import jakarta.validation.constraints.Min;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.LookEventDto;
 import ru.practicum.event.dto.SearchEventsParams;
 import ru.practicum.events.model.Event;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PublicEventsService {
 
     Event getEvent(Long id);
 
-    int getEventsViews(long id, LocalDateTime eventDate);
+    Double getEventRating(long id);
 
     EventFullDto getEventInfo(Long id, Long userId);
 
