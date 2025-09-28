@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS user_action;
+
 CREATE TABLE IF NOT EXISTS user_action (
 user_id BIGINT NOT NULL,
 event_id BIGINT NOT NULL,
@@ -5,3 +7,5 @@ weight DOUBLE PRECISION NOT NULL,
 updated TIMESTAMP NOT NULL,
 PRIMARY KEY (user_id, event_id)
 );
+
+--CREATE TABLE IF EXISTS

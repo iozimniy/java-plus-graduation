@@ -39,6 +39,8 @@ public class RecommendationsService {
     }
 
     private RecommendedEventProto createEvent(Long id, Double weight) {
+        log.info("Create RecommendedEventProto for getInteractionsCount: eventId {}, weight {}",
+                id, weight);
         return RecommendedEventProto.newBuilder()
                 .setEventId(id)
                 .setScore(weight)

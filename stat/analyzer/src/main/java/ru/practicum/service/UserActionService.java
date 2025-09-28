@@ -35,6 +35,9 @@ public class UserActionService {
 
 
         if (userAction.getWeight() < actionWeight) {
+            log.info("Change weight: eventId {}, userId {}, old weight {}, new weight {}",
+                    userActionAvro.getEventId(), userActionAvro.getUserId(),
+                    userAction.getWeight(), actionWeight);
             userAction.setWeight(actionWeight);
             repository.save(userAction);
         } else {
