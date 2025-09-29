@@ -10,13 +10,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
-import ru.practicum.event.dto.LookEventDto;
 import ru.practicum.event.dto.SearchEventsParams;
 import ru.practicum.events.service.PublicEventsService;
 import ru.practicum.events.validation.SearchParamsValidator;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -38,14 +35,7 @@ public class PublicEventController {
                       @RequestParam(required = false, defaultValue = "false") Boolean onlyAvailable,
                       @RequestParam(required = false, defaultValue = "EVENT_DATE") String sort,
                       @RequestParam(required = false, defaultValue = "0") int from,
-                      @RequestParam(required = false, defaultValue = "10") int size,
-                      HttpServletRequest request) {
-        String encodedUri = URLEncoder.encode(request.getRequestURI(), StandardCharsets.UTF_8);
-//        LookEventDto lookEventDto = LookEventDto.builder()
-//                .id(null)
-//                .uri(encodedUri)
-//                .ip(request.getRemoteAddr())
-//                .build();
+                      @RequestParam(required = false, defaultValue = "10") int size) {
         SearchEventsParams searchEventsParams =
                 new SearchEventsParams(text, categories, paid, rangeStart, rangeEnd, onlyAvailable, sort, from, size);
         log.info("\nPublicEventController.getFilteredEvents {}", searchEventsParams);
@@ -59,12 +49,6 @@ public class PublicEventController {
                                                      @Min(value = 1, message = "ID must be positive") Long id,
                                                      HttpServletRequest request,
                                                      @RequestHeader("X-EWM-USER-ID") long userId) {
- //       String encodedUri = request.getRequestURI();
-//        LookEventDto lookEventDto = LookEventDto.builder()
-//                .id(id)
-//                .uri(encodedUri)
-//                .ip(request.getRemoteAddr())
-//                .build();
 
         EventFullDto eventFullDto = publicEventsService.getEventInfo(id, userId);
         return ResponseEntity.status(HttpStatus.OK).body(eventFullDto);
@@ -72,7 +56,7 @@ public class PublicEventController {
 
     @PutMapping("/{eventId}/like")
     public void likeEvent(@RequestHeader("X-EWM-USER-ID") long userId,
-                          @PathVariable
+                          @PathVariable("eventId")
                           @Min(value = 1, message = "ID must be positive") Long id) throws IllegalAccessException {
         publicEventsService.likeEvent(id, userId);
     }
@@ -80,5 +64,12 @@ public class PublicEventController {
     @GetMapping("/recommendations")
     public List<EventShortDto> getRecommendationsForUser(@RequestHeader("X-EWM-USER-ID") long userId, long maxResults) {
         return publicEventsService.getRecommendationsForUser(userId, maxResults);
+    }
+
+    @GetMapping("/{eventId}/recommendations/")
+    public List<EventShortDto> getSimilarEvents(@RequestHeader("X-EWM-USER-ID") long userId,
+                                                @PathVariable("eventId") long eventId,
+                                                 long maxResults) {
+        return publicEventsService.getSimilarEvents(userId, eventId, maxResults);
     }
 }

@@ -23,7 +23,6 @@ import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.repository.EventRepository;
 import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.ewm.stats.proto.RecommendedEventProto;
-import ru.practicum.exception.ExternalServiceException;
 import ru.practicum.request.client.ParticipationRequestClient;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 import ru.practicum.request.dto.ParticipationRequestDto;
@@ -66,14 +65,14 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     }
 
     @Override
-    public Double getEventRating(long id) throws ExternalServiceException {
+    public Double getEventRating(long id) {
         Stream<RecommendedEventProto> stream = recommendationsClient.getRatings(List.of(id));
         List<Double> ratings = stream.map(proto -> proto.getScore()).toList();
         return ratings.getFirst();
     }
 
     @Override
-    public EventFullDto getEventAnyStatusWithViews(Long id) throws ExternalServiceException {
+    public EventFullDto getEventAnyStatusWithViews(Long id) {
         //Attention: this method works without saving views!
 
         Event event = eventRepository.findById(id)
@@ -133,7 +132,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     }
 
     @Override
-    public List<EventShortDto> getRecommendationsForUser(long userId, long maxResults) throws ExternalServiceException {
+    public List<EventShortDto> getRecommendationsForUser(long userId, long maxResults) {
         Stream<RecommendedEventProto> stream = recommendationsClient.getRecommendationsForUser(userId, maxResults);
         List<Long> recommendations = stream.map(proto -> proto.getEventId()).toList();
 
@@ -142,7 +141,17 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         return EventMapper.toListEventShortDto(events);
     }
 
-    public List<Event> getEventsByListIds(List<Long> ids) throws ExternalServiceException {
+    @Override
+    public List<EventShortDto> getSimilarEvents(long userId, long eventId, long maxResults) {
+        Stream<RecommendedEventProto> stream = recommendationsClient.getSimilarEvents(eventId, userId, maxResults);
+        List<Long> recommendations = stream.map(proto -> proto.getEventId()).toList();
+
+        List<Event> events = eventRepository.findAllById(recommendations);
+
+        return EventMapper.toListEventShortDto(events);
+    }
+
+    public List<Event> getEventsByListIds(List<Long> ids) {
         if (CollectionUtils.isEmpty(ids))
             return List.of();
 
@@ -164,7 +173,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     }
 
     @Override
-    public EventFullDto getEventInfo(Long id, Long userId) throws ExternalServiceException {
+    public EventFullDto getEventInfo(Long id, Long userId) {
         log.info("\nPublicEventsServiceImpl.getEventInfo: accepted {}", id);
         Event event = getEvent(id);
         log.info("\nPublicEventsServiceImpl.getEventsViews: event {}", event);
@@ -182,7 +191,7 @@ public class PublicEventsServiceImpl implements PublicEventsService {
     }
 
     @Override
-    public List<EventShortDto> getFilteredEvents(SearchEventsParams searchEventsParams) throws ExternalServiceException {
+    public List<EventShortDto> getFilteredEvents(SearchEventsParams searchEventsParams) {
         log.info("\nPublicEventsServiceImpl.getFilteredEvents: {}", searchEventsParams);
 
         BooleanBuilder builder = new BooleanBuilder();

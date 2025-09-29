@@ -16,7 +16,6 @@ import ru.practicum.kafka.producer.AggregatorProducer;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -49,16 +48,6 @@ public class AggregatorProcessor {
                     log.info("Coming UserAction from collector userId {}, eventId {}",
                             userAction.getUserId(), userAction.getEventId());
 
-//                    Optional<List<EventSimilarityAvro>> results = service.calculateSimilarity(userAction);
-//                    results.ifPresent(list ->
-//                            list.forEach(result ->producer.send(result))
-//                    );
-
-//                    List<EventSimilarityAvro> results = service.calculateSimilarity(userAction);
-//                    if (!results.isEmpty()) {
-//                        results.forEach(result -> producer.send(result));
-//                    }
-
                     List<EventSimilarityAvro> results = service.calculateSimilarity(userAction);
                     if (!results.isEmpty()) {
                         producer.send(results); // теперь пачкой
@@ -68,7 +57,7 @@ public class AggregatorProcessor {
         } catch (WakeupException e) {
             //тишина
         } catch (Exception e) {
-            log.error("Error action processing {}", e);
+            log.error("Error action processing {}", e.getMessage());
         } finally {
             try {
                 consumer.commitSync();

@@ -10,7 +10,6 @@ import ru.practicum.model.similarity.EventSimilarityId;
 import ru.practicum.repository.EventSimilarityRepository;
 
 import java.util.Objects;
-import java.util.Optional;
 
 @Service
 @Slf4j
@@ -43,7 +42,7 @@ public class EventSimilarityService {
             repository.save(eventSimilarity);
         } else {
             log.info("Similarity for eventA {} and eventB {} is the same: old similarity: {}, " +
-                    "new similarity", eventSimilarityAvro.getEventA(), eventSimilarityAvro.getEventB(),
+                    "new similarity {}", eventSimilarityAvro.getEventA(), eventSimilarityAvro.getEventB(),
                     eventSimilarity.getSimilarity(), eventSimilarityAvro.getScore());
         }
     }

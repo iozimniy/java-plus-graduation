@@ -6,7 +6,6 @@ import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
 
-import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -26,11 +25,11 @@ public class AggregatorService {
 
         Long eventId = userAction.getEventId();
         Long userId  = userAction.getUserId();
-        Double newWeight = getWeightByAction(userAction.getActionType());
+        double newWeight = getWeightByAction(userAction.getActionType());
 
         //проверяем, изменился ли вес, и если изменился, меняем его в eventUserWeight
         Map<Long, Double> eventWeight = eventUserWeight.computeIfAbsent(eventId, e -> new HashMap<>());
-        Double oldWeight = eventWeight.getOrDefault(userId, DEFAULT_WEIGHT);
+        double oldWeight = eventWeight.getOrDefault(userId, DEFAULT_WEIGHT);
 
         if (newWeight > oldWeight) {
             log.info("Changes weight for eventId {} of userId {}, new weight = {}", eventId, userId, newWeight);
@@ -83,11 +82,11 @@ public class AggregatorService {
                     Double ch = minSums.get(second);
 
                     //знаменатель формулы
-                    Double sumA = eventWeightSum.get(first);
-                    Double sumB = eventWeightSum.get(second);
-                    Double zn = Math.sqrt(sumA * sumB); //тесты подозрительно не съели произведение корней
+                    double sumA = eventWeightSum.get(first);
+                    double sumB = eventWeightSum.get(second);
+                    double zn = Math.sqrt(sumA * sumB); //тесты подозрительно не съели произведение корней
 
-                    Double similarityAB = ch / zn;
+                    double similarityAB = ch / zn;
 
                     //складываем в similarityAvroList
                     EventSimilarityAvro eventSimilarityAvro = EventSimilarityAvro.newBuilder()
@@ -113,16 +112,11 @@ public class AggregatorService {
         eventWeightSum.put(eventId, newSum);
     }
 
-    private double getWeightByAction(ActionTypeAvro type) throws IllegalArgumentException {
-        switch (type) {
-            case VIEW:
-                return 0.4;
-            case REGISTER:
-                return 0.8;
-            case LIKE:
-                return 1.0;
-            default:
-                throw new IllegalArgumentException("Unknown UserAction " + type);
-        }
+    private double getWeightByAction(ActionTypeAvro type) {
+        return switch (type) {
+            case VIEW -> 0.4;
+            case REGISTER -> 0.8;
+            case LIKE -> 1.0;
+        };
     }
 }

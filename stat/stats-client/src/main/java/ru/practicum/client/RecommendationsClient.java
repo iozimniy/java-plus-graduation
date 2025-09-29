@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.proto.*;
-import ru.practicum.exception.ExternalServiceException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -20,7 +19,7 @@ public class RecommendationsClient {
     @GrpcClient("analyzer")
     private RecommendationsControllerGrpc.RecommendationsControllerBlockingStub client;
 
-    public Stream<RecommendedEventProto> getRatings(List<Long> ids) throws ExternalServiceException {
+    public Stream<RecommendedEventProto> getRatings(List<Long> ids) {
         log.info("RecommendationClient: ratings request");
 
         try {
@@ -31,12 +30,12 @@ public class RecommendationsClient {
             Iterator<RecommendedEventProto> iterator = client.getInteractionsCount(interactionsCountRequestProto);
             return asStream(iterator);
         } catch (Exception e) {
-            log.error("RecommendationClient ratings request FAILED with message {}", e);
-            throw new ExternalServiceException("RecommendationClient ratings request FAILED with message " + e.getMessage());
+            log.error("RecommendationClient ratings request FAILED with message {}", e.getMessage());
+            throw new RuntimeException("RecommendationClient ratings request FAILED with message " + e.getMessage());
         }
     }
 
-    public Stream<RecommendedEventProto> getRecommendationsForUser(Long userId, long maxResults) throws ExternalServiceException {
+    public Stream<RecommendedEventProto> getRecommendationsForUser(Long userId, long maxResults) {
         log.info("RecommendationClient: for user {} recommendation request", userId);
 
         try {
@@ -48,12 +47,12 @@ public class RecommendationsClient {
             Iterator<RecommendedEventProto> iterator = client.getRecommendationsForUser(requestProto);
             return asStream(iterator);
         } catch (Exception e) {
-            log.error("RecommendationClient user recommendation request FAILED with message {}", e);
-            throw new ExternalServiceException("RecommendationClient user recommendation request FAILED with message " + e);
+            log.error("RecommendationClient user recommendation request FAILED with message {}", e.getMessage());
+            throw new RuntimeException("RecommendationClient user recommendation request FAILED with message " + e);
         }
     }
 
-    public Stream<RecommendedEventProto> getSimilarEvents(long eventId, long userId, long maxResults) throws ExternalServiceException {
+    public Stream<RecommendedEventProto> getSimilarEvents(long eventId, long userId, long maxResults) {
         log.info("RecommendationClient: for event {}, user {}", eventId, userId);
 
         try {
@@ -66,8 +65,8 @@ public class RecommendationsClient {
             Iterator<RecommendedEventProto> iterator = client.getSimilarEvents(requestProto);
             return asStream(iterator);
         } catch (Exception e) {
-            log.error("RecommendationClient similar recommendation request FAILED with message {}", e);
-            throw new ExternalServiceException("RecommendationClient similar recommendation request FAILED with message "
+            log.error("RecommendationClient similar recommendation request FAILED with message {}", e.getMessage());
+            throw new RuntimeException("RecommendationClient similar recommendation request FAILED with message "
                     + e);
         }
     }

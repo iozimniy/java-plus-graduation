@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
 import ru.practicum.kafka.config.EventsSimilarityConsumerConfig;
 import ru.practicum.service.EventSimilarityService;
-import ru.practicum.service.RecommendationsService;
 
 import java.time.Duration;
 import java.util.List;
@@ -48,7 +47,7 @@ public class EventsSimilarityProcessor implements Runnable {
         } catch (WakeupException e) {
             //тишина
         } catch (Exception e) {
-            log.error("Error event processing {}", e);
+            log.error("Error event processing {}", e.getMessage());
         } finally {
             try {
                 consumer.commitSync();

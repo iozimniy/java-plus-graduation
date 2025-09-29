@@ -22,7 +22,7 @@ public class UserActionService {
     private static final Double DEFAULT_WEIGHT = 0.0;
 
     @Transactional
-    public void processUserAction(UserActionAvro userActionAvro) throws IllegalAccessException {
+    public void processUserAction(UserActionAvro userActionAvro) {
         log.info("Processing user action with userId {}, eventId {}",
                 userActionAvro.getUserId(), userActionAvro.getEventId());
 
@@ -48,17 +48,12 @@ public class UserActionService {
         }
     }
 
-    private double getWeightByAction(ActionTypeAvro type) throws IllegalAccessException {
-        switch (type) {
-            case VIEW:
-                return 0.4;
-            case REGISTER:
-                return 0.8;
-            case LIKE:
-                return 1.0;
-            default:
-                throw new IllegalAccessException("Unknown UserAction " + type);
-        }
+    private double getWeightByAction(ActionTypeAvro type) {
+        return switch (type) {
+            case VIEW -> 0.4;
+            case REGISTER -> 0.8;
+            case LIKE -> 1.0;
+        };
     }
 
     public List<UserAction> getRecentActionsByUserId(Long userId, int limit) {

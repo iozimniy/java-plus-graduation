@@ -47,7 +47,7 @@ public class UserActionProcessor {
         } catch (WakeupException e) {
             //тишина
         } catch (Exception e) {
-            log.error("Error action processing {}", e);
+            log.error("Error action processing {}", e.getMessage());
         } finally {
             try {
                 consumer.commitSync();

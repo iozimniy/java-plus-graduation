@@ -89,15 +89,15 @@ public class RecommendationsService {
                                     userActionEventId.contains(neighbor.getEventSimilarityId().getEventB()))
                     .sorted(Comparator.comparing(EventSimilarity::getSimilarity).reversed())
                     .limit(5)
-                    .collect(Collectors.toList());
+                    .toList();
 
             //рассчитываем оценки
             if (userActionsNeighbors.isEmpty()) {
                 recommendationUserRating.put(eventId, DEFAULT_USER_RATING);
             }
 
-            Double sumWeightRating = 0.0;
-            Double sumSimilarity = 0.0;
+            double sumWeightRating = 0.0;
+            double sumSimilarity = 0.0;
 
             for (EventSimilarity userActionsNeighbor : userActionsNeighbors) {
 
@@ -121,7 +121,7 @@ public class RecommendationsService {
 
         return recommendationEventsIds.stream()
                 .map(event -> createRecommendationForUser(event, recommendationUserRating))
-                .collect(Collectors.toList()).stream();
+                .toList().stream();
 
 
     }
@@ -136,7 +136,7 @@ public class RecommendationsService {
         List<UserAction> recentUserActions = userActionService.getRecentActionsByUserId(userId, ACTIONS_LIMIT);
         List<Long> userActionEventId = recentUserActions.stream()
                 .map(userAction -> userAction.getUserActionId().getEventId())
-                .collect(Collectors.toList());
+                .toList();
 
         List<Long> recommendationEventsIds = new ArrayList<>();
 
@@ -157,7 +157,7 @@ public class RecommendationsService {
 
         return recommendationEventsIds.stream()
                 .map(event -> createRecommendationForUser(event, similarities))
-                .collect(Collectors.toList()).stream();
+                .toList().stream();
     }
 
     private RecommendedEventProto createEvent(Long id, Double weight) {

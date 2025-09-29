@@ -8,7 +8,6 @@ import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.ewm.stats.proto.UserActionControllerGrpc;
 import ru.practicum.ewm.stats.proto.UserActionProto;
 import com.google.protobuf.Timestamp;
-import ru.practicum.exception.ExternalServiceException;
 
 import java.time.Instant;
 
@@ -18,7 +17,7 @@ public class CollectorClient {
     @GrpcClient("collector")
     private UserActionControllerGrpc.UserActionControllerBlockingStub client;
 
-    public void sendUserAction(Long userId, Long eventId, ActionTypeProto actionType, Instant timestamp) throws ExternalServiceException {
+    public void sendUserAction(Long userId, Long eventId, ActionTypeProto actionType, Instant timestamp) {
 
         log.info("Sending user action with userId: {}, eventId: {}, type: {}, timestamp: {}",
                 userId, eventId, actionType, timestamp);
@@ -41,8 +40,8 @@ public class CollectorClient {
                     userId, eventId, actionType, timestamp);
         } catch (StatusRuntimeException e) {
             log.error("Sending user action with userId: {}, eventId: {}, type: {}, timestamp: {} failed with message {}",
-                    userId, eventId, actionType, timestamp, e);
-            throw new ExternalServiceException("Sending user action failed " + e);
+                    userId, eventId, actionType, timestamp, e.getMessage());
+            throw new RuntimeException("Sending user action failed " + e);
         }
 
     }
