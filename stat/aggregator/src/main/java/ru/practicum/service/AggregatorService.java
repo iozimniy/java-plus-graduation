@@ -20,7 +20,7 @@ public class AggregatorService {
     private static final Double DEFAULT_WEIGHT = 0.0;
     private static final Double DEFAULT_SUM = 0.0;
 
-    public List<EventSimilarityAvro> calculateSimilarity(UserActionAvro userAction) throws IllegalAccessException {
+    public List<EventSimilarityAvro> calculateSimilarity(UserActionAvro userAction) throws IllegalArgumentException {
         log.info("Processing user action with userId {}, eventId {}",
                 userAction.getUserId(), userAction.getEventId());
 
@@ -56,9 +56,8 @@ public class AggregatorService {
                 Double weightA = eventUserWeight.get(eventId).get(userId);
 
                 Map<Long, Double> eventBmap = eventUserWeight.getOrDefault(eventB, new HashMap<>());
-                log.info("USER {}, EVENT-B {}, MAP {}", userId, eventB, eventBmap.toString());
                 Double weightB = eventBmap.getOrDefault(userId, DEFAULT_WEIGHT);
-                log.info("User {}, EventA {} weight {}, eventB {} weight {}", userId, eventId, weightA, eventB, weightB);
+                log.debug("User {}, EventA {} weight {}, eventB {} weight {}", userId, eventId, weightA, eventB, weightB);
 
                 //пересчитываем similarity только в случае, если пользователь взаимодействовал с eventB
                 if (weightB > DEFAULT_WEIGHT) {
@@ -114,7 +113,7 @@ public class AggregatorService {
         eventWeightSum.put(eventId, newSum);
     }
 
-    private double getWeightByAction(ActionTypeAvro type) throws IllegalAccessException {
+    private double getWeightByAction(ActionTypeAvro type) throws IllegalArgumentException {
         switch (type) {
             case VIEW:
                 return 0.4;
@@ -123,7 +122,7 @@ public class AggregatorService {
             case LIKE:
                 return 1.0;
             default:
-                throw new IllegalAccessException("Unknown UserAction " + type);
+                throw new IllegalArgumentException("Unknown UserAction " + type);
         }
     }
 }
