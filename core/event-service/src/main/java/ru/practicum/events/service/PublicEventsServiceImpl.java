@@ -13,13 +13,13 @@ import ru.practicum.client.CollectorClient;
 import ru.practicum.client.RecommendationsClient;
 import ru.practicum.commons.config.DateConfig;
 import ru.practicum.commons.errors.EventNotPublishedException;
+import ru.practicum.event.constants.StateEvent;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.SearchEventsParams;
 import ru.practicum.events.mapper.EventMapper;
 import ru.practicum.events.model.Event;
 import ru.practicum.events.model.QEvent;
-import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.repository.EventRepository;
 import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.ewm.stats.proto.RecommendedEventProto;
@@ -29,7 +29,10 @@ import ru.practicum.request.dto.ParticipationRequestDto;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -163,8 +166,8 @@ public class PublicEventsServiceImpl implements PublicEventsService {
 
         Map<Long, Double> ratings = recommendationsClient.getRatings(ids)
                 .collect(Collectors.toMap(
-                recommendedEventProto -> recommendedEventProto.getEventId(),
-                recommendedEventProto -> recommendedEventProto.getScore()
+                        recommendedEventProto -> recommendedEventProto.getEventId(),
+                        recommendedEventProto -> recommendedEventProto.getScore()
                 ));
 
         // Заносим значения views в список events
@@ -256,10 +259,10 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         List<Long> ids = events.stream().map(event -> event.getId()).toList();
 
         Map<Long, Double> ratings = recommendationsClient.getRatings(ids)
-                        .collect(Collectors.toMap(
-                                recommendedEventProto -> recommendedEventProto.getEventId(),
-                                recommendedEventProto -> recommendedEventProto.getScore()
-                        ));
+                .collect(Collectors.toMap(
+                        recommendedEventProto -> recommendedEventProto.getEventId(),
+                        recommendedEventProto -> recommendedEventProto.getScore()
+                ));
 
         ratingToEvents(ratings, events);
 

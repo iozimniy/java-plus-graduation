@@ -69,7 +69,7 @@ public class PublicEventController {
     @GetMapping("/{eventId}/recommendations/")
     public List<EventShortDto> getSimilarEvents(@RequestHeader("X-EWM-USER-ID") long userId,
                                                 @PathVariable("eventId") long eventId,
-                                                 long maxResults) {
+                                                long maxResults) {
         return publicEventsService.getSimilarEvents(userId, eventId, maxResults);
     }
 }

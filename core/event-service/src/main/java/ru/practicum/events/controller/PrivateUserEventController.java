@@ -20,7 +20,6 @@ import ru.practicum.user.dto.GetUserEventsDto;
 import ru.practicum.user.dto.UserDto;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "/users/{userId}/events")

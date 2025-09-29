@@ -95,7 +95,7 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
     public ParticipationRequestDto getRequest(Long userId, Long eventId) {
         ParticipationRequest request = requestRepository.findByUserIdAndEventId(userId, eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Request with userId=" + userId
-                        + " and eventId=" + eventId +  " was not found"));
+                        + " and eventId=" + eventId + " was not found"));
 
         return ParticipationRequestToDtoMapper.mapToDto(request);
     }
@@ -134,8 +134,8 @@ public class ParticipationRequestServiceImpl implements ParticipationRequestServ
         List<Object[]> rows = requestRepository.countConfirmedRequestsByEventIdListAndStatusMapping(ParticipationRequestStatus.CONFIRMED, ids);
 
         return rows.stream().collect(Collectors.toMap(
-           row -> (Long) row[0],
-           row -> ((Long) row[1]).intValue()
+                row -> (Long) row[0],
+                row -> ((Long) row[1]).intValue()
         ));
     }
 }

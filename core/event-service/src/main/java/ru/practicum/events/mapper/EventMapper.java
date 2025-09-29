@@ -5,19 +5,19 @@ import lombok.NoArgsConstructor;
 import ru.practicum.category.mapper.CategoryDtoMapper;
 import ru.practicum.category.model.Category;
 import ru.practicum.commons.config.DateConfig;
+import ru.practicum.event.constants.StateEvent;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.LocationDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.events.model.Event;
-import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.model.Location;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.dto.UserShortDto;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 import java.util.List;
+import java.util.Objects;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class EventMapper {
@@ -38,7 +38,7 @@ public class EventMapper {
 
     public static Event dtoToEvent(NewEventDto dto, UserDto user) {
         Category category = new Category();
-        category.setId((long) dto.getCategory());
+        category.setId(dto.getCategory());
 
         LocalDateTime eventTime = LocalDateTime.parse(dto.getEventDate(), DateConfig.FORMATTER);
         return Event.builder()

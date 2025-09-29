@@ -10,7 +10,6 @@ import ru.practicum.model.ParticipationRequest;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public interface ParticipationRequestRepository extends JpaRepository<ParticipationRequest, Long>, QuerydslPredicateExecutor<ParticipationRequest> {
