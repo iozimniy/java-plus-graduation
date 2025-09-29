@@ -55,19 +55,6 @@
 				<artifactId>kafka-clients</artifactId>
 				<version>${kafka-clients.version}</version>
 			</dependency>
-			<!--    GRPC dependencies management        -->
-			<dependency>
-				<groupId>net.devh</groupId>
-				<artifactId>grpc-spring-boot-starter</artifactId>
-				<version>${grpc-spring-boot-starter.version}</version>
-			</dependency>
-
-			<dependency>
-				<groupId>net.devh</groupId>
-				<artifactId>grpc-server-spring-boot-starter</artifactId>
-				<version>${grpc-spring-boot-starter.version}</version>
-			</dependency>
-
 			<dependency>
 				<groupId>io.grpc</groupId>
 				<artifactId>grpc-stub</artifactId>
@@ -87,8 +74,6 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
-
-			<!--    / GRPC dependencies management        -->
 		</dependencies>
 	</dependencyManagement>
 

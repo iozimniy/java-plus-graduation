@@ -20,7 +20,7 @@ public class AggregatorService {
     private static final Double DEFAULT_WEIGHT = 0.0;
     private static final Double DEFAULT_SUM = 0.0;
 
-    public Optional<List<EventSimilarityAvro>> calculateSimilarity(UserActionAvro userAction) throws IllegalAccessException {
+    public List<EventSimilarityAvro> calculateSimilarity(UserActionAvro userAction) throws IllegalAccessException {
         log.info("Processing user action with userId {}, eventId {}",
                 userAction.getUserId(), userAction.getEventId());
 
@@ -41,81 +41,71 @@ public class AggregatorService {
             changeWeightSum(eventId, deltaWeight);
 
             //пересчитываем сходства и отправляем результат в кафку
-            return Optional.of(changeSimilarity(eventId, userId, oldWeight,
-                    newWeight, userAction.getTimestamp()));
+            List<EventSimilarityAvro> similarityAvroList = new ArrayList<>();
+
+            for (Long eventB : eventUserWeight.keySet()) {
+
+                long first  = Math.min(eventId, eventB);
+                long second = Math.max(eventId, eventB);
+
+                if (Objects.equals(eventB, eventId)) {
+                    continue;
+                }
+
+                //мы ранее внесли вес для eventId, потому он точно есть
+                Double weightA = eventUserWeight.get(eventId).get(userId);
+
+                Map<Long, Double> eventBmap = eventUserWeight.getOrDefault(eventB, new HashMap<>());
+                log.info("USER {}, EVENT-B {}, MAP {}", userId, eventB, eventBmap.toString());
+                Double weightB = eventBmap.getOrDefault(userId, DEFAULT_WEIGHT);
+                log.info("User {}, EventA {} weight {}, eventB {} weight {}", userId, eventId, weightA, eventB, weightB);
+
+                //пересчитываем similarity только в случае, если пользователь взаимодействовал с eventB
+                if (weightB > DEFAULT_WEIGHT) {
+                    log.info("Change similarity eventId = {}, eventB = {}", eventId, eventB);
+
+                    Map<Long, Double> minSums = eventsMinSum
+                            .computeIfAbsent(first, e -> new HashMap<>());
+
+                    //обновляем сумму минимальных весов
+                    Double oldMinSums = minSums
+                            .getOrDefault(second, DEFAULT_SUM);
+
+                    Double oldMin = Math.min(oldWeight, weightB);
+                    Double newMin = Math.min(newWeight, weightB);
+                    Double newSumMinWeights = oldMinSums + (newMin - oldMin);
+
+                    minSums.put(second, newSumMinWeights);
+                    eventsMinSum.put(first, minSums);
+
+                    //расчитываем сходство
+
+                    //числитель формулы
+                    Double ch = minSums.get(second);
+
+                    //знаменатель формулы
+                    Double sumA = eventWeightSum.get(first);
+                    Double sumB = eventWeightSum.get(second);
+                    Double zn = Math.sqrt(sumA * sumB); //тесты подозрительно не съели произведение корней
+
+                    Double similarityAB = ch / zn;
+
+                    //складываем в similarityAvroList
+                    EventSimilarityAvro eventSimilarityAvro = EventSimilarityAvro.newBuilder()
+                            .setEventA(first)
+                            .setEventB(second)
+                            .setScore(similarityAB)
+                            .setTimestamp(userAction.getTimestamp())
+                            .build();
+                    similarityAvroList.add(eventSimilarityAvro);
+                }
+            }
+
+            return similarityAvroList;
 
         }
 
-        return Optional.empty();
-    }
-
-    private List<EventSimilarityAvro> changeSimilarity(Long eventA,
-                                                       Long userId,
-                                                       Double oldWeight,
-                                                       Double newWeight,
-                                                       Instant timestamp) {
-
-        List<EventSimilarityAvro> similarityAvroList = new ArrayList<>();
-
-        for (Long eventB : eventUserWeight.keySet()) {
-
-            long first  = Math.min(eventA, eventB);
-            long second = Math.max(eventA, eventB);
-
-            if (Objects.equals(eventB, eventA)) {
-                continue;
-            }
-
-            //мы ранее внесли вес для eventA, потому он точно есть
-            Double weightA = eventUserWeight.get(eventA).get(userId);
-
-            Map<Long, Double> eventBmap = eventUserWeight.getOrDefault(eventB, new HashMap<>());
-            log.info("USER {}, EVENT-B {}, MAP {}", userId, eventB, eventBmap.toString());
-            Double weightB = eventBmap.getOrDefault(userId, DEFAULT_WEIGHT);
-            log.info("User {}, EventA {} weight {}, eventB {} weight {}", userId, eventA, weightA, eventB, weightB);
-
-            //пересчитываем similarity только в случае, если пользователь взаимодействовал с eventB
-            if (weightB > DEFAULT_WEIGHT) {
-                log.info("Change similarity eventA = {}, eventB = {}", eventA, eventB);
-
-                Map<Long, Double> minSums = eventsMinSum
-                        .computeIfAbsent(first, e -> new HashMap<>());
-
-                //обновляем сумму минимальных весов
-                Double oldMinSums = minSums
-                        .getOrDefault(second, DEFAULT_SUM);
-
-                Double oldMin = Math.min(oldWeight, weightB);
-                Double newMin = Math.min(newWeight, weightB);
-                Double newSumMinWeights = oldMinSums + (newMin - oldMin);
-
-                minSums.put(second, newSumMinWeights);
-                eventsMinSum.put(first, minSums);
-
-                //расчитываем сходство
-
-                //числитель формулы
-                Double ch = minSums.get(second);
-
-                //знаменатель формулы
-                Double sumA = eventWeightSum.get(first);
-                Double sumB = eventWeightSum.get(second);
-                Double zn = Math.sqrt(sumA * sumB); //тесты не съели если произведение корней
-
-                Double similarityAB = ch / zn;
-
-                //складываем в similarityAvroList
-                EventSimilarityAvro eventSimilarityAvro = EventSimilarityAvro.newBuilder()
-                        .setEventA(first)
-                        .setEventB(second)
-                        .setScore(similarityAB)
-                        .setTimestamp(timestamp)
-                        .build();
-                similarityAvroList.add(eventSimilarityAvro);
-            }
-        }
-
-        return similarityAvroList;
+        return Collections.EMPTY_LIST;
     }
 
     private void changeWeightSum(Long eventId, Double deltaWeight) {

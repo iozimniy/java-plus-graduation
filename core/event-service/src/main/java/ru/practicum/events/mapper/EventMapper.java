@@ -75,7 +75,6 @@ public class EventMapper {
                 .initiator(new UserShortDto(event.getInitiatorId(), event.getInitiatorName()))
                 .paid(event.isPaid())
                 .title(event.getTitle())
-                .views((event.getViews() == null) ? 0 : event.getViews())
                 .createdOn(event.getCreatedOn().format(DateConfig.FORMATTER))
                 .description(event.getDescription())
                 .location(toLocationDto(event.getLocation()))
@@ -83,6 +82,7 @@ public class EventMapper {
                 .publishedOn(publishedOn)
                 .requestModeration(event.isRequestModeration())
                 .state(event.getState())
+                .rating(event.getRating())
                 .build();
     }
 
@@ -96,7 +96,7 @@ public class EventMapper {
                 .initiator(new UserShortDto(event.getInitiatorId(), event.getInitiatorName()))
                 .paid(event.isPaid())
                 .title(event.getTitle())
-                .views((event.getViews() == null) ? 0 : event.getViews())
+                .rating(event.getRating())
                 .build();
     }
 

@@ -49,10 +49,20 @@ public class AggregatorProcessor {
                     log.info("Coming UserAction from collector userId {}, eventId {}",
                             userAction.getUserId(), userAction.getEventId());
 
-                    Optional<List<EventSimilarityAvro>> results = service.calculateSimilarity(userAction);
-                    results.ifPresent(list ->
-                            list.forEach(result ->producer.send(result))
-                    );
+//                    Optional<List<EventSimilarityAvro>> results = service.calculateSimilarity(userAction);
+//                    results.ifPresent(list ->
+//                            list.forEach(result ->producer.send(result))
+//                    );
+
+//                    List<EventSimilarityAvro> results = service.calculateSimilarity(userAction);
+//                    if (!results.isEmpty()) {
+//                        results.forEach(result -> producer.send(result));
+//                    }
+
+                    List<EventSimilarityAvro> results = service.calculateSimilarity(userAction);
+                    if (!results.isEmpty()) {
+                        producer.send(results); // теперь пачкой
+                    }
                 }
             }
         } catch (WakeupException e) {

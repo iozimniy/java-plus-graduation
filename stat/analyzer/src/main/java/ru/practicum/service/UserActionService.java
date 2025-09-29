@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.ewm.stats.avro.ActionTypeAvro;
 import ru.practicum.ewm.stats.avro.UserActionAvro;
-import ru.practicum.model.UserAction;
-import ru.practicum.model.UserActionId;
+import ru.practicum.model.action.UserAction;
+import ru.practicum.model.action.UserActionId;
 import ru.practicum.repository.UserActionRepository;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -57,5 +59,9 @@ public class UserActionService {
             default:
                 throw new IllegalAccessException("Unknown UserAction " + type);
         }
+    }
+
+    public List<UserAction> getRecentActionsByUserId(Long userId, int limit) {
+        return repository.findRecentActionsByUserId(userId, limit);
     }
 }

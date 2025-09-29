@@ -17,6 +17,14 @@ spring:
     password: password
     driver-class-name: org.postgresql.Driver
 
+grpc:
+  client:
+    collector:
+      address: 'discovery:///collector'
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
 logging:
   level:
     ru.practicum: DEBUG

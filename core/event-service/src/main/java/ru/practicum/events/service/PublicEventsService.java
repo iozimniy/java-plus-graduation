@@ -21,4 +21,6 @@ public interface PublicEventsService {
     EventFullDto getEventAnyStatusWithViews(Long id);
 
     void likeEvent(@Min(value = 1, message = "ID must be positive") Long id, long userId) throws IllegalAccessException;
+
+    List<EventShortDto> getRecommendationsForUser(long userId, long maxResults);
 }

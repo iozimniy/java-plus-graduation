@@ -70,10 +70,15 @@ public class PublicEventController {
         return ResponseEntity.status(HttpStatus.OK).body(eventFullDto);
     }
 
-    @PutMapping("{eventId}/like")
+    @PutMapping("/{eventId}/like")
     public void likeEvent(@RequestHeader("X-EWM-USER-ID") long userId,
                           @PathVariable
-                          @Min(value = 1, message = "ID must be positive") Long id) {
+                          @Min(value = 1, message = "ID must be positive") Long id) throws IllegalAccessException {
         publicEventsService.likeEvent(id, userId);
+    }
+
+    @GetMapping("/recommendations")
+    public List<EventShortDto> getRecommendationsForUser(@RequestHeader("X-EWM-USER-ID") long userId, long maxResults) {
+        return publicEventsService.getRecommendationsForUser(userId, maxResults);
     }
 }

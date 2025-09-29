@@ -1,17 +1,17 @@
-package ru.practicum.model;
+package ru.practicum.model.similarity;
 
 import jakarta.persistence.Embeddable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Embeddable
 @Builder
-public class UserActionId {
-    private Long userId;
-    private Long eventId;
+@Getter
+public class EventSimilarityId {
+    private Long eventA;
+    private Long eventB;
 }

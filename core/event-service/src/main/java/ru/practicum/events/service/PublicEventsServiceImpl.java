@@ -131,6 +131,16 @@ public class PublicEventsServiceImpl implements PublicEventsService {
         }
     }
 
+    @Override
+    public List<EventShortDto> getRecommendationsForUser(long userId, long maxResults) {
+        Stream<RecommendedEventProto> stream = recommendationsClient.getRecommendationsForUser(userId, maxResults);
+        List<Long> recommendations = stream.map(proto -> proto.getEventId()).toList();
+
+        List<Event> events = eventRepository.findAllById(recommendations);
+
+        return EventMapper.toListEventShortDto(events);
+    }
+
     public List<Event> getEventsByListIds(List<Long> ids) {
         if (CollectionUtils.isEmpty(ids))
             return List.of();
