@@ -41,7 +41,7 @@ public class UserActionProcessor {
                     UserActionAvro userAction = (UserActionAvro) record.value();
                     service.processUserAction(userAction);
                     log.info("Coming UserAction from collector userId {}, eventId {}, action {}",
-                                    userAction.getUserId(), userAction.getEventId(), userAction.getActionType());
+                            userAction.getUserId(), userAction.getEventId(), userAction.getActionType());
                 }
             }
         } catch (WakeupException e) {

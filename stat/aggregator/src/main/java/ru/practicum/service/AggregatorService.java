@@ -12,19 +12,18 @@ import java.util.*;
 @Slf4j
 public class AggregatorService {
 
+    private static final Double DEFAULT_WEIGHT = 0.0;
+    private static final Double DEFAULT_SUM = 0.0;
     Map<Long, Map<Long, Double>> eventUserWeight = new HashMap<>();
     Map<Long, Double> eventWeightSum = new HashMap<>();
     Map<Long, Map<Long, Double>> eventsMinSum = new HashMap<>();
-
-    private static final Double DEFAULT_WEIGHT = 0.0;
-    private static final Double DEFAULT_SUM = 0.0;
 
     public List<EventSimilarityAvro> calculateSimilarity(UserActionAvro userAction) throws IllegalArgumentException {
         log.info("Processing user action with userId {}, eventId {}",
                 userAction.getUserId(), userAction.getEventId());
 
         Long eventId = userAction.getEventId();
-        Long userId  = userAction.getUserId();
+        Long userId = userAction.getUserId();
         double newWeight = getWeightByAction(userAction.getActionType());
 
         //проверяем, изменился ли вес, и если изменился, меняем его в eventUserWeight
@@ -44,7 +43,7 @@ public class AggregatorService {
 
             for (Long eventB : eventUserWeight.keySet()) {
 
-                long first  = Math.min(eventId, eventB);
+                long first = Math.min(eventId, eventB);
                 long second = Math.max(eventId, eventB);
 
                 if (Objects.equals(eventB, eventId)) {
@@ -84,7 +83,7 @@ public class AggregatorService {
                     //знаменатель формулы
                     double sumA = eventWeightSum.get(first);
                     double sumB = eventWeightSum.get(second);
-                    double zn = Math.sqrt(sumA * sumB); //тесты подозрительно не съели произведение корней
+                    double zn = Math.sqrt(sumA * sumB);
 
                     double similarityAB = ch / zn;
 

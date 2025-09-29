@@ -18,12 +18,12 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class RecommendationsService {
 
-    private final UserActionRepository userActionRepository;
-    private final UserActionService userActionService;
-    private final EventSimilarityRepository eventSimilarityRepository;
     private static final int ACTIONS_LIMIT = 20;
     private static final int SIMILARITY_LIMIT = 10;
     private static final double DEFAULT_USER_RATING = 0.4;
+    private final UserActionRepository userActionRepository;
+    private final UserActionService userActionService;
+    private final EventSimilarityRepository eventSimilarityRepository;
 
     public Stream<RecommendedEventProto> getInteractionsCount(List<Long> eventIdList) {
         log.info("Request for interactions weight for events with ids {}", eventIdList);

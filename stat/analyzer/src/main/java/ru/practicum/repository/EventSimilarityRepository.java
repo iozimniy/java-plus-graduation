@@ -19,5 +19,5 @@ public interface EventSimilarityRepository extends JpaRepository<EventSimilarity
             "ORDER BY similarity DESC " +
             "LIMIT :limit", nativeQuery = true)
     List<EventSimilarity> findTopByEventId(@Param("eventId") Long eventId,
-                                                 @Param("limit") int limit);
+                                           @Param("limit") int limit);
 }

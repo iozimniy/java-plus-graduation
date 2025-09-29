@@ -18,8 +18,8 @@ import java.util.List;
 @Transactional
 public class UserActionService {
 
-    private final UserActionRepository repository;
     private static final Double DEFAULT_WEIGHT = 0.0;
+    private final UserActionRepository repository;
 
     @Transactional
     public void processUserAction(UserActionAvro userActionAvro) {

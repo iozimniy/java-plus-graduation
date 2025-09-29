@@ -17,9 +17,8 @@ import java.util.Objects;
 @Transactional
 public class EventSimilarityService {
 
-    private final EventSimilarityRepository repository;
-
     private static final Double DEFAULT_SIMILARITY = 0.0;
+    private final EventSimilarityRepository repository;
 
     public void processEventSimilarity(EventSimilarityAvro eventSimilarityAvro) {
         log.info("Processing event similarity with eventA {}, eventB {}, similarity {}",
@@ -42,7 +41,7 @@ public class EventSimilarityService {
             repository.save(eventSimilarity);
         } else {
             log.info("Similarity for eventA {} and eventB {} is the same: old similarity: {}, " +
-                    "new similarity {}", eventSimilarityAvro.getEventA(), eventSimilarityAvro.getEventB(),
+                            "new similarity {}", eventSimilarityAvro.getEventA(), eventSimilarityAvro.getEventB(),
                     eventSimilarity.getSimilarity(), eventSimilarityAvro.getScore());
         }
     }
