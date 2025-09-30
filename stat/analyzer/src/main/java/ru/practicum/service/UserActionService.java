@@ -15,7 +15,6 @@ import java.util.List;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-@Transactional
 public class UserActionService {
 
     private static final Double DEFAULT_WEIGHT = 0.0;

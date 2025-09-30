@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.devh.boot.grpc.client.inject.GrpcClient;
 import org.springframework.stereotype.Service;
 import ru.practicum.ewm.stats.proto.*;
+import ru.practicum.exception.GrpcClientException;
 
 import java.util.Iterator;
 import java.util.List;
@@ -31,7 +32,7 @@ public class RecommendationsClient {
             return asStream(iterator);
         } catch (Exception e) {
             log.error("RecommendationClient ratings request FAILED with message {}", e.getMessage());
-            throw new RuntimeException("RecommendationClient ratings request FAILED with message " + e.getMessage());
+            throw new GrpcClientException("RecommendationClient ratings request FAILED " + e);
         }
     }
 
@@ -48,7 +49,7 @@ public class RecommendationsClient {
             return asStream(iterator);
         } catch (Exception e) {
             log.error("RecommendationClient user recommendation request FAILED with message {}", e.getMessage());
-            throw new RuntimeException("RecommendationClient user recommendation request FAILED with message " + e);
+            throw new GrpcClientException("RecommendationClient user recommendation request FAILED " + e);
         }
     }
 
@@ -66,8 +67,7 @@ public class RecommendationsClient {
             return asStream(iterator);
         } catch (Exception e) {
             log.error("RecommendationClient similar recommendation request FAILED with message {}", e.getMessage());
-            throw new RuntimeException("RecommendationClient similar recommendation request FAILED with message "
-                    + e);
+            throw new GrpcClientException("RecommendationClient similar recommendation request FAILED " + e);
         }
     }
 

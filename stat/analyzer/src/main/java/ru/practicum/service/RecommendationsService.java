@@ -19,7 +19,8 @@ import java.util.stream.Stream;
 public class RecommendationsService {
 
     private static final int ACTIONS_LIMIT = 20;
-    private static final int SIMILARITY_LIMIT = 10;
+//    private static final int SIMILARITY_LIMIT = 10;
+    private static final int NEIGHBORS_LIMIT = 5;
     private static final double DEFAULT_USER_RATING = 0.4;
     private final UserActionRepository userActionRepository;
     private final UserActionService userActionService;
@@ -80,26 +81,18 @@ public class RecommendationsService {
 
         for (Long eventId : recommendationEventsIds) {
             //получаем соседей
-            List<EventSimilarity> neighbors = eventSimilarityRepository.findTopByEventId(eventId, SIMILARITY_LIMIT);
-
-            //берём только те, с которыми взаимодействовал пользователь
-            List<EventSimilarity> userActionsNeighbors = neighbors.stream()
-                    .filter(neighbor ->
-                            userActionEventId.contains(neighbor.getEventSimilarityId().getEventA()) ||
-                                    userActionEventId.contains(neighbor.getEventSimilarityId().getEventB()))
-                    .sorted(Comparator.comparing(EventSimilarity::getSimilarity).reversed())
-                    .limit(5)
-                    .toList();
+            List<EventSimilarity> neighbors = eventSimilarityRepository.findTopByEventIdAndInList(eventId,
+                    userActionEventId, NEIGHBORS_LIMIT);
 
             //рассчитываем оценки
-            if (userActionsNeighbors.isEmpty()) {
+            if (neighbors.isEmpty()) {
                 recommendationUserRating.put(eventId, DEFAULT_USER_RATING);
             }
 
             double sumWeightRating = 0.0;
             double sumSimilarity = 0.0;
 
-            for (EventSimilarity userActionsNeighbor : userActionsNeighbors) {
+            for (EventSimilarity userActionsNeighbor : neighbors) {
 
                 sumSimilarity = sumSimilarity + userActionsNeighbor.getSimilarity();
 

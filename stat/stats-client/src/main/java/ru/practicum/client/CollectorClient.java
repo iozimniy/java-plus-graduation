@@ -8,6 +8,7 @@ import ru.practicum.ewm.stats.proto.ActionTypeProto;
 import ru.practicum.ewm.stats.proto.UserActionControllerGrpc;
 import ru.practicum.ewm.stats.proto.UserActionProto;
 import com.google.protobuf.Timestamp;
+import ru.practicum.exception.GrpcClientException;
 
 import java.time.Instant;
 
@@ -41,7 +42,7 @@ public class CollectorClient {
         } catch (StatusRuntimeException e) {
             log.error("Sending user action with userId: {}, eventId: {}, type: {}, timestamp: {} failed with message {}",
                     userId, eventId, actionType, timestamp, e.getMessage());
-            throw new RuntimeException("Sending user action failed " + e);
+            throw new GrpcClientException("Sending user action failed " + e);
         }
 
     }
