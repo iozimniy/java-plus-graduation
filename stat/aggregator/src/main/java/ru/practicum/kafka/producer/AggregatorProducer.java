@@ -19,9 +19,6 @@ public class AggregatorProducer {
     private String topic;
 
     public void send(List<? extends SpecificRecordBase> similarities) {
-//        ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(topic, similarity);
-//        client.getProducer().send(record);
-//        log.info("Send record {}, similarity {}", record, similarity);
 
         for (SpecificRecordBase similarity : similarities) {
             ProducerRecord<String, SpecificRecordBase> record = new ProducerRecord<>(topic, similarity);
