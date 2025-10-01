@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS events (
   creation_date TIMESTAMP WITHOUT TIME ZONE,
   publication_date TIMESTAMP WITHOUT TIME ZONE,
   state VARCHAR(50) NOT NULL,
-  views BIGINT,
+  rating BIGINT,
   initiator_id BIGINT,
   initiator_name VARCHAR(250),
   FOREIGN KEY (category_id) REFERENCES category (id),

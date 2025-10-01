@@ -1,0 +1,61 @@
+package ru.practicum.service;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.stats.avro.ActionTypeAvro;
+import ru.practicum.ewm.stats.avro.UserActionAvro;
+import ru.practicum.model.action.UserAction;
+import ru.practicum.model.action.UserActionId;
+import ru.practicum.repository.UserActionRepository;
+
+import java.util.List;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class UserActionService {
+
+    private static final Double DEFAULT_WEIGHT = 0.0;
+    private final UserActionRepository repository;
+
+    @Transactional
+    public void processUserAction(UserActionAvro userActionAvro) {
+        log.info("Processing user action with userId {}, eventId {}",
+                userActionAvro.getUserId(), userActionAvro.getEventId());
+
+        Double actionWeight = getWeightByAction(userActionAvro.getActionType());
+
+        UserActionId userActionId = UserActionId.builder()
+                .userId(userActionAvro.getUserId())
+                .eventId(userActionAvro.getEventId())
+                .build();
+        UserAction userAction = repository.findById(userActionId)
+                .orElse(new UserAction(userActionId, DEFAULT_WEIGHT, userActionAvro.getTimestamp()));
+
+
+        if (userAction.getWeight() < actionWeight) {
+            log.info("Change weight: eventId {}, userId {}, old weight {}, new weight {}",
+                    userActionAvro.getEventId(), userActionAvro.getUserId(),
+                    userAction.getWeight(), actionWeight);
+            userAction.setWeight(actionWeight);
+            repository.save(userAction);
+        } else {
+            log.info("Action weight of action {} is the same: action weight {}, old weigh: {}",
+                    userActionId, actionWeight, userAction.getWeight());
+        }
+    }
+
+    private double getWeightByAction(ActionTypeAvro type) {
+        return switch (type) {
+            case VIEW -> 0.4;
+            case REGISTER -> 0.8;
+            case LIKE -> 1.0;
+        };
+    }
+
+    public List<UserAction> getRecentActionsByUserId(Long userId, int limit) {
+        return repository.findRecentActionsByUserId(userId, limit);
+    }
+}

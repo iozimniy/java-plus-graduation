@@ -10,7 +10,6 @@ import ru.practicum.model.ParticipationRequest;
 import ru.practicum.request.constants.ParticipationRequestStatus;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 public interface ParticipationRequestRepository extends JpaRepository<ParticipationRequest, Long>, QuerydslPredicateExecutor<ParticipationRequest> {
@@ -20,6 +19,8 @@ public interface ParticipationRequestRepository extends JpaRepository<Participat
     boolean existsByUserIdAndEventId(Long userId, Long eventId);
 
     Optional<ParticipationRequest> findByIdAndUserId(Long id, Long userId);
+
+    Optional<ParticipationRequest> findByUserIdAndEventId(Long userId, Long eventId);
 
     @Query("SELECT COUNT(pr) FROM ParticipationRequest pr WHERE pr.status = :status AND pr.eventId = :eventId")
     int countConfirmedRequestsByStatusAndEventId(@Param("status") ParticipationRequestStatus status, @Param("eventId") Long eventId);

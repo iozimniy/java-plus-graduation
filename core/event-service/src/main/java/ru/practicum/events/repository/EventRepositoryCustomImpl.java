@@ -2,9 +2,7 @@ package ru.practicum.events.repository;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.jpa.impl.JPAQuery;
-import feign.FeignException;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -13,9 +11,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import ru.practicum.events.model.Event;
 import ru.practicum.events.model.QEvent;
-import ru.practicum.request.constants.ParticipationRequestStatus;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 @Slf4j
 @Repository

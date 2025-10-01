@@ -25,4 +25,8 @@ public interface ParticipationRequestClient {
 
     @PostMapping("/count/confirmed/list")
     Map<Long, Integer> getConfirmedRequestsCountForList(@RequestBody List<Long> ids);
+
+    @GetMapping("{userId}/{eventId}")
+    ParticipationRequestDto getRequest(@PathVariable("userId") Long userId,
+                                              @PathVariable("eventId") Long eventId);
 }

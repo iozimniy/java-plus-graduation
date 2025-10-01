@@ -1,0 +1,60 @@
+package ru.practicum.kafka;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.specific.SpecificRecordBase;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.WakeupException;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import ru.practicum.ewm.stats.avro.EventSimilarityAvro;
+import ru.practicum.kafka.config.EventsSimilarityConsumerConfig;
+import ru.practicum.service.EventSimilarityService;
+
+import java.time.Duration;
+import java.util.List;
+
+@Service
+@Slf4j
+public class EventsSimilarityProcessor implements Runnable {
+    private final Consumer<String, SpecificRecordBase> consumer;
+    private final Duration CONSUME_ATTEMPT_TIMEOUT = Duration.ofMillis(100);
+    private final EventSimilarityService service;
+    @Value("${kafka.topics.events-similarity}")
+    private String topic;
+
+    public EventsSimilarityProcessor(EventsSimilarityConsumerConfig config, EventSimilarityService service) {
+        this.consumer = new KafkaConsumer<>(config.getEventSimilarityConsumerConfig());
+        this.service = service;
+    }
+
+    @Override
+    public void run() {
+        try {
+            consumer.subscribe(List.of(topic));
+
+            while (true) {
+                ConsumerRecords<String, SpecificRecordBase> records = consumer.poll(CONSUME_ATTEMPT_TIMEOUT);
+                for (ConsumerRecord<String, SpecificRecordBase> record : records) {
+                    EventSimilarityAvro eventSimilarity = (EventSimilarityAvro) record.value();
+                    service.processEventSimilarity(eventSimilarity);
+                    log.info("Coming EventSimilarity from aggregator eventA {}, eventB {}",
+                            eventSimilarity.getEventA(), eventSimilarity.getEventB());
+                }
+            }
+        } catch (WakeupException e) {
+            //тишина
+        } catch (Exception e) {
+            log.error("Error event processing {}", e.getMessage());
+        } finally {
+            try {
+                consumer.commitSync();
+            } finally {
+                log.info("Closer event similarity consumer");
+                consumer.close();
+            }
+        }
+    }
+}

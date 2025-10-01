@@ -2,8 +2,8 @@ package ru.practicum.validation;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.constants.StateEvent;
+import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.repository.ParticipationRequestRepository;
 import ru.practicum.user.dto.UserDto;
 import ru.practicum.user.errors.EventOwnerParticipationException;

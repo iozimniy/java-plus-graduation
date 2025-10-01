@@ -1,7 +1,7 @@
 package ru.practicum.events.validation;
 
 import jakarta.validation.ConstraintViolationException;
-import ru.practicum.config.DateConfig;
+import ru.practicum.commons.config.DateConfig;
 import ru.practicum.event.dto.SearchEventsParams;
 
 import java.time.LocalDateTime;

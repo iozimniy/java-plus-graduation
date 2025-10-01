@@ -24,4 +24,6 @@ public interface ParticipationRequestService {
     Integer getConfirmedRequests(Long eventId);
 
     Map<Long, Integer> getConfirmedRequestsForList(List<Long> ids);
+
+    ParticipationRequestDto getRequest(Long userId, Long eventId);
 }

@@ -9,10 +9,8 @@ import ru.practicum.event.client.EventClient;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.service.ParticipationRequestService;
-import ru.practicum.service.ParticipationRequestServiceImpl;
 import ru.practicum.user.client.UserClient;
 import ru.practicum.user.dto.UserDto;
-//import ru.practicum.dto.ParticipationRequestDto;
 
 import java.util.List;
 

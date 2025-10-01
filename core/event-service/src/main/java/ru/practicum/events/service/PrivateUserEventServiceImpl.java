@@ -8,15 +8,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.category.repository.CategoryRepository;
+import ru.practicum.commons.config.DateConfig;
 import ru.practicum.commons.errors.ForbiddenActionException;
-import ru.practicum.config.DateConfig;
+import ru.practicum.event.constants.StateEvent;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventUserRequest;
 import ru.practicum.events.mapper.EventMapper;
 import ru.practicum.events.model.Event;
-import ru.practicum.event.constants.StateEvent;
 import ru.practicum.events.repository.EventRepository;
 import ru.practicum.request.client.ParticipationRequestClient;
 import ru.practicum.request.constants.ParticipationRequestStatus;
@@ -65,7 +65,6 @@ public class PrivateUserEventServiceImpl implements PrivateUserEventService {
     @Transactional
     public EventFullDto addNewEvent(UserDto user, NewEventDto eventDto) {
         Event event = EventMapper.dtoToEvent(eventDto, user);
-
         eventRepository.save(event);
 
         return EventMapper.toEventFullDto(event);
