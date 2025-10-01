@@ -18,7 +18,7 @@ kafka:
       key.serializer: org.apache.kafka.common.serialization.StringSerializer
       value.serializer: ru.practicum.serializer.GeneralAvroSerializer
       batch.size: 2048
-      linger.ms: 8000
+      linger.ms: 7500
   topics:
     user-actions: stats.user-actions.v1
     events-similarity: stats.events-similarity.v1
